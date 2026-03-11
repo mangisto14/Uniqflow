@@ -1,0 +1,299 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  EDITOR
+  VIEWER
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  color       String   @default("#3b82f6")
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  members       User[]
+  assignedSteps ProcessStep[]
+  sharingRules  SharingRule[] @relation("TargetTeam")
+
+  @@map("teams")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String    @map("password_hash")
+  role         UserRole  @default(VIEWER)
+  teamId       String?   @map("team_id")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  team              Team?            @relation(fields: [teamId], references: [id])
+  createdProcesses  Process[]
+  stepExecutions    StepExecution[]
+  auditLogs         AuditLog[]
+  refreshTokens     RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+enum ProcessStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+model Process {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  status      ProcessStatus @default(DRAFT)
+  version     Int           @default(1)
+  metadata    Json?
+  createdById String        @map("created_by_id")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  createdBy  User               @relation(fields: [createdById], references: [id])
+  steps      ProcessStep[]
+  executions ProcessExecution[]
+
+  @@index([status])
+  @@index([createdById])
+  @@map("processes")
+}
+
+enum StepType {
+  FORM
+  APPROVAL
+  CONDITION
+  NOTIFICATION
+  TASK
+  REVIEW
+}
+
+model ProcessStep {
+  id             String   @id @default(cuid())
+  processId      String   @map("process_id")
+  type           StepType
+  name           String
+  description    String?
+  config         Json     @default("{}")
+  position       Json     @default("{\"x\": 0, \"y\": 0}")
+  order          Int      @default(0)
+  assignedTeamId String?  @map("assigned_team_id")
+  timeoutMinutes Int?     @map("timeout_minutes")
+  isRequired     Boolean  @default(true) @map("is_required")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  process      Process          @relation(fields: [processId], references: [id], onDelete: Cascade)
+  assignedTeam Team?            @relation(fields: [assignedTeamId], references: [id])
+  dependsOn    StepDependency[] @relation("DependentStep")
+  dependedBy   StepDependency[] @relation("DependencyStep")
+  fields       StepField[]
+  branches     StepBranch[]
+  sharingRules SharingRule[]
+  executions   StepExecution[]
+
+  @@index([processId])
+  @@map("process_steps")
+}
+
+model StepDependency {
+  id              String @id @default(cuid())
+  stepId          String @map("step_id")
+  dependsOnStepId String @map("depends_on_step_id")
+  type            String @default("completion")
+
+  step      ProcessStep @relation("DependentStep", fields: [stepId], references: [id], onDelete: Cascade)
+  dependsOn ProcessStep @relation("DependencyStep", fields: [dependsOnStepId], references: [id], onDelete: Cascade)
+
+  @@unique([stepId, dependsOnStepId])
+  @@map("step_dependencies")
+}
+
+model StepField {
+  id            String  @id @default(cuid())
+  stepId        String  @map("step_id")
+  name          String
+  label         String
+  fieldType     String  @map("field_type")
+  required      Boolean @default(false)
+  defaultValue  String? @map("default_value")
+  placeholder   String?
+  options       Json?
+  validation    Json?
+  order         Int     @default(0)
+  conditionalOn Json?   @map("conditional_on")
+
+  step ProcessStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([stepId])
+  @@map("step_fields")
+}
+
+model StepBranch {
+  id           String  @id @default(cuid())
+  stepId       String  @map("step_id")
+  label        String
+  condition    Json
+  targetStepId String? @map("target_step_id")
+  isDefault    Boolean @default(false) @map("is_default")
+  order        Int     @default(0)
+
+  step ProcessStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([stepId])
+  @@map("step_branches")
+}
+
+enum ShareType {
+  ALL_DATA
+  FILTERED
+  DIGEST
+}
+
+model SharingRule {
+  id           String    @id @default(cuid())
+  stepId       String    @map("step_id")
+  targetTeamId String    @map("target_team_id")
+  shareType    ShareType @default(ALL_DATA)
+  filterConfig Json?     @map("filter_config")
+  template     String?
+  isActive     Boolean   @default(true) @map("is_active")
+
+  step       ProcessStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  targetTeam Team        @relation("TargetTeam", fields: [targetTeamId], references: [id])
+
+  @@map("sharing_rules")
+}
+
+model ProcessExecution {
+  id          String        @id @default(cuid())
+  processId   String        @map("process_id")
+  status      ProcessStatus @default(ACTIVE)
+  currentData Json          @default("{}") @map("current_data")
+  startedById String        @map("started_by_id")
+  startedAt   DateTime      @default(now()) @map("started_at")
+  completedAt DateTime?     @map("completed_at")
+  cancelledAt DateTime?     @map("cancelled_at")
+  metadata    Json?
+
+  process        Process         @relation(fields: [processId], references: [id])
+  stepExecutions StepExecution[]
+
+  @@index([processId])
+  @@index([status])
+  @@map("process_executions")
+}
+
+enum StepExecutionStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  SKIPPED
+  FAILED
+}
+
+model StepExecution {
+  id           String              @id @default(cuid())
+  executionId  String              @map("execution_id")
+  stepId       String              @map("step_id")
+  status       StepExecutionStatus @default(PENDING)
+  data         Json                @default("{}")
+  assignedToId String?             @map("assigned_to_id")
+  notes        String?
+  startedAt    DateTime?           @map("started_at")
+  completedAt  DateTime?           @map("completed_at")
+  metadata     Json?
+
+  execution  ProcessExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  step       ProcessStep      @relation(fields: [stepId], references: [id])
+  assignedTo User?            @relation(fields: [assignedToId], references: [id])
+
+  @@index([executionId])
+  @@index([stepId])
+  @@index([status])
+  @@map("step_executions")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  action    String
+  entity    String
+  entityId  String   @map("entity_id")
+  diff      Json?
+  ipAddress String?  @map("ip_address")
+  timestamp DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  title     String
+  body      String
+  type      String
+  link      String?
+  entityId  String?  @map("entity_id")
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model DispatchRecord {
+  id           String    @id @default(cuid())
+  executionId  String    @map("execution_id")
+  stepId       String    @map("step_id")
+  targetTeamId String    @map("target_team_id")
+  channel      String
+  payload      Json
+  status       String    @default("sent")
+  sentAt       DateTime  @default(now()) @map("sent_at")
+  readAt       DateTime? @map("read_at")
+
+  @@index([targetTeamId])
+  @@index([executionId])
+  @@map("dispatch_records")
+}
