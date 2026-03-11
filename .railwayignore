@@ -1,0 +1,9 @@
+# Ignore local dev artifacts — not needed in Railway build context
+node_modules
+**/node_modules
+**/.env
+**/dist
+**/coverage
+**/*.log
+.turbo
+**/tsconfig.tsbuildinfo

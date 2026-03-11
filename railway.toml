@@ -1,0 +1,28 @@
+# Railway monorepo configuration
+# Docs: https://docs.railway.com/reference/config-as-code
+
+[build]
+builder = "dockerfile"
+
+# ── API Service ────────────────────────────────────────────────────────────────
+# Configure via Railway dashboard:
+#   Service name : uniqflow-api
+#   Dockerfile   : apps/api/Dockerfile
+#   Root dir     : / (monorepo root — Dockerfile needs full context)
+#
+# Required environment variables:
+#   DATABASE_URL   → from Railway PostgreSQL plugin (auto-injected)
+#   REDIS_URL      → from Railway Redis plugin (auto-injected)
+#   JWT_SECRET     → generate: openssl rand -base64 48
+#   CORS_ORIGIN    → https://<your-web-service>.up.railway.app
+#   API_PORT       → 3001 (Railway maps this to PORT automatically)
+#   NODE_ENV       → production
+
+# ── Web Service ────────────────────────────────────────────────────────────────
+# Configure via Railway dashboard:
+#   Service name   : uniqflow-web
+#   Dockerfile     : apps/web/Dockerfile
+#   Root dir       : / (monorepo root)
+#
+# Required build variables (set in Railway → Service → Variables):
+#   VITE_API_URL   → https://<your-api-service>.up.railway.app
