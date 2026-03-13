@@ -56,5 +56,5 @@ WORKDIR /app/apps/api
 
 EXPOSE 3001
 
-# Run migrations then start
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/main"]
+# Start server (run prisma db push manually on first deploy via Railway CLI)
+CMD ["node", "dist/main"]
