@@ -47,7 +47,7 @@ COPY package.json package-lock.json turbo.json tsconfig.base.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/api/package.json ./apps/api/
 
-RUN npm ci --omit=dev --ignore-scripts
+RUN npm ci --omit=dev
 
 # Copy built artifacts
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
