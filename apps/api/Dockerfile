@@ -46,11 +46,11 @@ RUN npm ci --omit=dev --ignore-scripts
 
 # Copy built artifacts
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY --from=builder /app/apps/api/node_modules/.prisma ./apps/api/node_modules/.prisma
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 
-# Copy Prisma schema (needed for migrations at runtime)
+# Copy Prisma schema and generate client in runner
 COPY apps/api/prisma ./apps/api/prisma
+RUN cd apps/api && npx prisma generate
 
 WORKDIR /app/apps/api
 
