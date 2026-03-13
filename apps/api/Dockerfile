@@ -62,4 +62,4 @@ WORKDIR /app/apps/api
 EXPOSE 3001
 
 # Start server
-CMD ["node", "/app/apps/api/dist/main"]
+CMD ["node", "/app/apps/api/dist/apps/api/src/main"]
