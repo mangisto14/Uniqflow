@@ -61,5 +61,5 @@ WORKDIR /app/apps/api
 
 EXPOSE 3001
 
-# Start server
-CMD ["node", "/app/apps/api/dist/apps/api/src/main"]
+# Start server (uses DIRECT_URL env var for db push if set)
+CMD ["sh", "-c", "if [ -n \"$DIRECT_URL\" ]; then DATABASE_URL=$DIRECT_URL npx prisma db push --skip-generate; fi && node /app/apps/api/dist/apps/api/src/main"]
