@@ -32,6 +32,9 @@ RUN cd apps/api && npx prisma generate
 # Build shared + api via turbo
 RUN npx turbo run build --filter=@uniqflow/api...
 
+# Verify build output exists
+RUN ls -la apps/api/dist/
+
 # ── Stage 3: runner ────────────────────────────────────────────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app
