@@ -24,9 +24,10 @@ model Team {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  members       User[]
-  assignedSteps ProcessStep[]
-  sharingRules  SharingRule[] @relation("TargetTeam")
+  members          User[]
+  assignedSteps    ProcessStep[]
+  sharingRules     SharingRule[]   @relation("TargetTeam")
+  dispatchRecords  DispatchRecord[]
 
   @@map("teams")
 }
@@ -210,8 +211,9 @@ model ProcessExecution {
   cancelledAt DateTime?     @map("cancelled_at")
   metadata    Json?
 
-  process        Process         @relation(fields: [processId], references: [id])
+  process        Process         @relation(fields: [processId], references: [id], onDelete: Cascade)
   stepExecutions StepExecution[]
+  dispatchRecords DispatchRecord[]
 
   @@index([processId])
   @@index([status])
@@ -239,7 +241,7 @@ model StepExecution {
   metadata     Json?
 
   execution  ProcessExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
-  step       ProcessStep      @relation(fields: [stepId], references: [id])
+  step       ProcessStep      @relation(fields: [stepId], references: [id], onDelete: Cascade)
   assignedTo User?            @relation(fields: [assignedToId], references: [id])
 
   @@index([executionId])
@@ -258,7 +260,7 @@ model AuditLog {
   ipAddress String?  @map("ip_address")
   timestamp DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([entity, entityId])
   @@index([userId])
@@ -277,6 +279,8 @@ model Notification {
   isRead    Boolean  @default(false) @map("is_read")
   createdAt DateTime @default(now()) @map("created_at")
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId, isRead])
   @@index([createdAt])
   @@map("notifications")
@@ -292,6 +296,10 @@ model DispatchRecord {
   status       String    @default("sent")
   sentAt       DateTime  @default(now()) @map("sent_at")
   readAt       DateTime? @map("read_at")
+
+  execution  ProcessExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  step       ProcessStep      @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  targetTeam Team             @relation(fields: [targetTeamId], references: [id])
 
   @@index([targetTeamId])
   @@index([executionId])

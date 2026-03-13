@@ -1,7 +1,7 @@
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 
-@WebSocketGateway({ cors: { origin: '*' }, namespace: '/notifications' })
+@WebSocketGateway({ cors: { origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173' }, namespace: '/notifications' })
 export class NotificationGateway {
   @WebSocketServer()
   server: Server;

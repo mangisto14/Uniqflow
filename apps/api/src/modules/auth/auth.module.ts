@@ -11,7 +11,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
   imports: [
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'fallback-secret',
+      secret: process.env.JWT_SECRET ?? 'uniqflow-fallback-secret-32-chars-min!!',
       signOptions: { expiresIn: '15m' },
     }),
   ],

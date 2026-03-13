@@ -133,16 +133,17 @@ export class ExecutionService {
     });
   }
 
-  async rejectStep(executionId: string, stepId: string, dto: RejectStepDto, _userId: string) {
+  async rejectStep(executionId: string, stepId: string, dto: RejectStepDto, userId: string) {
     const execution = await this.findOne(executionId);
     const stepExecution = execution.stepExecutions.find((se) => se.stepId === stepId);
-    if (!stepExecution) throw new NotFoundException(`Step execution not found`);
+    if (!stepExecution) throw new NotFoundException(`Step execution ${stepId} not found`);
 
     return this.prisma.stepExecution.update({
       where: { id: stepExecution.id },
       data: {
         status: StepExecutionStatus.FAILED,
         notes: dto.reason,
+        assignedToId: userId,
         completedAt: new Date(),
       },
     });
