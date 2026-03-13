@@ -33,9 +33,6 @@ RUN cd apps/api && npx prisma generate
 RUN cd packages/shared && npm run build
 RUN cd apps/api && npm run build
 
-# Verify build output exists
-RUN find /app -name 'main.js' 2>/dev/null && ls -laR /app/apps/api/dist/
-
 # ── Stage 3: runner ────────────────────────────────────────────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app

@@ -27,6 +27,12 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor());
 
+  // Health check endpoint
+  const httpAdapter = app.getHttpAdapter();
+  httpAdapter.get('/api/health', (_req: unknown, res: { json: (o: object) => void }) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
   const config = new DocumentBuilder()
     .setTitle('Uniqflow API')
     .setDescription('Uniqflow Process Management Platform API')
