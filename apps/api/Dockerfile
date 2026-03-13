@@ -33,7 +33,7 @@ RUN cd apps/api && npx prisma generate
 RUN npx turbo run build --filter=@uniqflow/api...
 
 # Verify build output exists
-RUN ls -la apps/api/dist/
+RUN ls -la /app/apps/api/dist/ || (echo 'dist not found, searching...' && find /app -name 'main.js' 2>/dev/null)
 
 # ── Stage 3: runner ────────────────────────────────────────────────────────────
 FROM node:20-alpine AS runner
