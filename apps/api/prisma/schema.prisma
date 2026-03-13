@@ -49,6 +49,7 @@ model User {
   stepExecutions    StepExecution[]
   auditLogs         AuditLog[]
   refreshTokens     RefreshToken[]
+  notifications     Notification[]
 
   @@map("users")
 }
@@ -126,6 +127,7 @@ model ProcessStep {
   branches     StepBranch[]
   sharingRules SharingRule[]
   executions   StepExecution[]
+  dispatchRecords DispatchRecord[]
 
   @@index([processId])
   @@map("process_steps")
