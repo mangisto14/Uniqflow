@@ -58,4 +58,4 @@ WORKDIR /app/apps/api
 EXPOSE 3001
 
 # Start server
-CMD ["sh", "-c", "echo '=== dist contents ===' && ls -la dist/ && node dist/main"]
+CMD ["sh", "-c", "echo '=== workdir ===' && pwd && echo '=== api dist ===' && ls -la /app/apps/api/dist/ && node /app/apps/api/dist/main"]
