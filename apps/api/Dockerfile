@@ -57,5 +57,5 @@ WORKDIR /app/apps/api
 
 EXPOSE 3001
 
-# Start server (run prisma db push manually on first deploy via Railway CLI)
-CMD ["node", "dist/main"]
+# Start server
+CMD ["sh", "-c", "echo '=== dist contents ===' && ls -la dist/ && node dist/main"]
