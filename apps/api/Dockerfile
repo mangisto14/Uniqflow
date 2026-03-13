@@ -29,8 +29,9 @@ COPY apps/api ./apps/api
 # Generate Prisma client
 RUN cd apps/api && npx prisma generate
 
-# Build shared + api via turbo
-RUN npx turbo run build --filter=@uniqflow/api...
+# Build shared first, then api
+RUN cd packages/shared && npm run build
+RUN cd apps/api && npm run build
 
 # Verify build output exists
 RUN ls -la /app/apps/api/dist/ || (echo 'dist not found, searching...' && find /app -name 'main.js' 2>/dev/null)
