@@ -31,10 +31,10 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = parseInt(process.env.API_PORT ?? '3001', 10);
-  await app.listen(port);
-  console.log(`Uniqflow API running on http://localhost:${port}/api`);
-  console.log(`Swagger docs at http://localhost:${port}/api/docs`);
+  const port = parseInt(process.env.PORT ?? process.env.API_PORT ?? '3001', 10);
+  await app.listen(port, '0.0.0.0');
+  console.log(`Uniqflow API running on port ${port}`);
+  console.log(`Swagger docs at http://0.0.0.0:${port}/api/docs`);
 }
 
 bootstrap();
