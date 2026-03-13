@@ -34,7 +34,7 @@ RUN cd packages/shared && npm run build
 RUN cd apps/api && npm run build
 
 # Verify build output exists
-RUN ls -la /app/apps/api/dist/ || (echo 'dist not found, searching...' && find /app -name 'main.js' 2>/dev/null)
+RUN find /app -name 'main.js' 2>/dev/null && ls -laR /app/apps/api/dist/
 
 # ── Stage 3: runner ────────────────────────────────────────────────────────────
 FROM node:20-alpine AS runner
