@@ -11,11 +11,11 @@ export class FormHandler extends BaseStepHandler {
     _ctx: ExecutionContext,
     input?: Record<string, unknown>,
   ): Promise<StepHandlerResult> {
-    // Form steps require user input — they stay ACTIVE until user submits
-    if (input && Object.keys(input).length > 0) {
+    // Accept submission even with empty data (step may have no required fields)
+    if (input !== undefined) {
       return this.ok(input);
     }
-    // No input yet — waiting for user
+    // No input provided at all — waiting for user
     return { success: false, error: 'Awaiting form submission' };
   }
 }

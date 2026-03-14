@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsObject,
   IsInt,
+  IsNumber,
   IsBoolean,
   IsArray,
   ValidateNested,
@@ -15,10 +16,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { StepType } from '@prisma/client';
 
 class PositionDto {
-  @IsInt()
+  @IsNumber()
   x: number;
 
-  @IsInt()
+  @IsNumber()
   y: number;
 }
 
