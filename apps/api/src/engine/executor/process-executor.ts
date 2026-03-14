@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { HandlerRegistry } from '../handlers/handler-registry';
 import { ExecutionContext, mergeStepData } from './execution-context';
@@ -13,6 +13,11 @@ import {
   StepType,
 } from '@prisma/client';
 
+export interface IExecutionGateway {
+  emitExecutionUpdate(executionId: string, data: unknown): void;
+  emitStepUpdate(executionId: string, stepData: unknown): void;
+}
+
 @Injectable()
 export class ProcessExecutor {
   private readonly logger = new Logger(ProcessExecutor.name);
@@ -20,6 +25,7 @@ export class ProcessExecutor {
   constructor(
     private readonly prisma: PrismaService,
     private readonly handlers: HandlerRegistry,
+    @Optional() private readonly gateway?: IExecutionGateway,
   ) {}
 
   async startExecution(
@@ -50,7 +56,6 @@ export class ProcessExecutor {
         include: { stepExecutions: true },
       });
 
-      // Activate first step
       if (process.steps.length > 0) {
         const firstStep = process.steps[0];
         await tx.stepExecution.updateMany({
@@ -58,16 +63,18 @@ export class ProcessExecutor {
           data: { status: StepExecutionStatus.ACTIVE, startedAt: new Date() },
         });
 
-        // Auto-complete non-interactive steps (CONDITION, NOTIFICATION)
         if (this.isAutoStep(firstStep.type)) {
           await this.autoAdvance(tx, execution.id, firstStep, execution.stepExecutions, {});
         }
       }
 
-      return tx.processExecution.findUniqueOrThrow({
+      const result = await tx.processExecution.findUniqueOrThrow({
         where: { id: execution.id },
         include: { stepExecutions: { include: { step: true } } },
       });
+
+      this.gateway?.emitExecutionUpdate(result.id, result);
+      return result;
     });
   }
 
@@ -109,7 +116,7 @@ export class ProcessExecutor {
     const updatedCtx = mergeStepData(ctx, stepId, result.data ?? {});
 
     return this.prisma.$transaction(async (tx) => {
-      await tx.stepExecution.update({
+      const updatedSE = await tx.stepExecution.update({
         where: { id: stepExecution.id },
         data: {
           status: StepExecutionStatus.COMPLETED,
@@ -124,12 +131,24 @@ export class ProcessExecutor {
         data: { currentData: updatedCtx.currentData as Prisma.InputJsonValue },
       });
 
-      await this.advanceExecution(tx, execution.id, execution.process.steps, execution.stepExecutions, stepId, updatedCtx);
+      await this.advanceExecution(
+        tx,
+        execution.id,
+        execution.process.steps,
+        execution.stepExecutions,
+        stepId,
+        updatedCtx,
+      );
 
-      return tx.processExecution.findUniqueOrThrow({
+      const finalExecution = await tx.processExecution.findUniqueOrThrow({
         where: { id: executionId },
         include: { stepExecutions: { include: { step: true } } },
       });
+
+      this.gateway?.emitStepUpdate(executionId, updatedSE);
+      this.gateway?.emitExecutionUpdate(executionId, finalExecution);
+
+      return finalExecution;
     });
   }
 
@@ -143,7 +162,7 @@ export class ProcessExecutor {
       where: { executionId, stepId },
     });
 
-    return this.prisma.stepExecution.update({
+    const updated = await this.prisma.stepExecution.update({
       where: { id: stepExecution.id },
       data: {
         status: StepExecutionStatus.FAILED,
@@ -152,6 +171,9 @@ export class ProcessExecutor {
         completedAt: new Date(),
       },
     });
+
+    this.gateway?.emitStepUpdate(executionId, updated);
+    return updated;
   }
 
   private async advanceExecution(
@@ -166,7 +188,6 @@ export class ProcessExecutor {
     const nextStep = steps[completedIdx + 1];
 
     if (!nextStep) {
-      // All steps done
       const allDone = stepExecutions.every(
         (se) => se.stepId === completedStepId || se.status === StepExecutionStatus.COMPLETED,
       );
@@ -187,7 +208,6 @@ export class ProcessExecutor {
       data: { status: StepExecutionStatus.ACTIVE, startedAt: new Date() },
     });
 
-    // Auto-advance non-interactive steps
     if (this.isAutoStep(nextStep.type)) {
       await this.autoAdvance(tx, executionId, nextStep, stepExecutions, ctx.currentData);
     }

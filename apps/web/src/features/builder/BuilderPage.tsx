@@ -8,6 +8,8 @@ import 'reactflow/dist/style.css';
 import { processesApi } from '../../api/processes.api';
 import { apiClient } from '../../api/client';
 import { t } from '../../i18n';
+import { FormDesigner } from '../forms/FormDesigner';
+import { ConditionEditor, IConditionGroup, createEmptyCondition } from '../conditions/ConditionEditor';
 
 const NODE_TYPES_OPTIONS = [
   { type: 'FORM', label: t.builder.stepTypes.FORM, color: '#3b82f6' },
@@ -18,13 +20,20 @@ const NODE_TYPES_OPTIONS = [
   { type: 'REVIEW', label: t.builder.stepTypes.REVIEW, color: '#ef4444' },
 ];
 
+type FieldType = 'text' | 'number' | 'email' | 'date' | 'select' | 'textarea' | 'checkbox';
+interface Field {
+  id: string; name: string; label: string;
+  fieldType: FieldType; required: boolean;
+  placeholder?: string; options?: string;
+}
+
 function stepToNode(step: Record<string, unknown>, index: number): Node {
   const pos = (step.position as { x: number; y: number }) ?? { x: 100 + index * 220, y: 100 };
   const typeInfo = NODE_TYPES_OPTIONS.find((t) => t.type === step.type) ?? NODE_TYPES_OPTIONS[0];
   return {
     id: step.id as string,
     position: pos,
-    data: { label: step.name as string, type: step.type, color: typeInfo.color },
+    data: { label: step.name as string, type: step.type, color: typeInfo.color, raw: step },
     style: {
       background: typeInfo.color + '22',
       border: `2px solid ${typeInfo.color}`,
@@ -43,6 +52,10 @@ export function BuilderPage() {
   const [process, setProcess] = useState<Record<string, unknown> | null>(null);
   const [saving, setSaving] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [stepName, setStepName] = useState('');
+  const [fields, setFields] = useState<Field[]>([]);
+  const [condition, setCondition] = useState<IConditionGroup>(createEmptyCondition());
+  const [configTab, setConfigTab] = useState<'general' | 'fields' | 'condition'>('general');
 
   useEffect(() => {
     if (!id) return;
@@ -68,6 +81,16 @@ export function BuilderPage() {
     [setEdges],
   );
 
+  const handleSelectNode = (node: Node) => {
+    setSelectedNode(node);
+    setStepName(node.data.label as string);
+    const raw = node.data.raw as Record<string, unknown>;
+    setFields((raw?.fields as Field[]) ?? []);
+    const cfg = raw?.config as Record<string, unknown>;
+    setCondition((cfg?.condition as IConditionGroup) ?? createEmptyCondition());
+    setConfigTab('general');
+  };
+
   const handleAddStep = async (type: string, label: string) => {
     if (!id) return;
     const steps = (process?.steps as Record<string, unknown>[]) ?? [];
@@ -81,6 +104,29 @@ export function BuilderPage() {
     const step = (res.data?.data ?? res.data) as Record<string, unknown>;
     setNodes((nds) => [...nds, stepToNode(step, steps.length)]);
     setProcess((p) => p ? { ...p, steps: [...steps, step] } : p);
+  };
+
+  const handleSaveStep = async () => {
+    if (!id || !selectedNode) return;
+    setSaving(true);
+    try {
+      const payload: Record<string, unknown> = {
+        name: stepName,
+        position: selectedNode.position,
+      };
+      if (selectedNode.data.type === 'FORM') payload.fields = fields;
+      if (selectedNode.data.type === 'CONDITION') payload.config = { condition };
+      await apiClient.put(`/processes/${id}/steps/${selectedNode.id}`, payload);
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === selectedNode.id
+            ? { ...n, data: { ...n.data, label: stepName } }
+            : n
+        )
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSavePositions = async () => {
@@ -103,10 +149,12 @@ export function BuilderPage() {
     setSelectedNode(null);
   };
 
+  const selectedType = selectedNode?.data.type as string | undefined;
+
   return (
     <div className="flex h-[calc(100vh-8rem)] gap-4" dir="rtl">
       {/* Palette */}
-      <div className="w-48 flex-shrink-0 space-y-2">
+      <div className="w-44 flex-shrink-0 space-y-2 overflow-y-auto">
         <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">{t.builder.addStep}</h2>
         {NODE_TYPES_OPTIONS.map((tp) => (
           <button
@@ -140,7 +188,7 @@ export function BuilderPage() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          onNodeClick={(_, node) => setSelectedNode(node)}
+          onNodeClick={(_, node) => handleSelectNode(node)}
           fitView
         >
           <Controls />
@@ -150,16 +198,62 @@ export function BuilderPage() {
 
       {/* Config panel */}
       {selectedNode && (
-        <div className="w-56 flex-shrink-0 card space-y-3">
-          <h3 className="font-semibold text-gray-800">שלב</h3>
-          <p className="text-sm text-gray-600">{selectedNode.data.label}</p>
-          <p className="text-xs text-gray-400">{t.builder.stepTypes[selectedNode.data.type as keyof typeof t.builder.stepTypes] ?? selectedNode.data.type}</p>
-          <button onClick={() => handleDeleteStep(selectedNode.id)} className="w-full btn-secondary text-sm text-red-600 hover:text-red-700">
-            {t.builder.deleteStep}
-          </button>
-          <button onClick={() => setSelectedNode(null)} className="w-full btn-secondary text-sm">
-            {t.builder.close}
-          </button>
+        <div className="w-72 flex-shrink-0 card space-y-3 overflow-y-auto">
+          {/* Tabs */}
+          <div className="flex gap-1 border-b border-gray-100 pb-2">
+            {(['general', ...(selectedType === 'FORM' ? ['fields'] : []), ...(selectedType === 'CONDITION' ? ['condition'] : [])] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setConfigTab(tab as typeof configTab)}
+                className={`text-xs px-2 py-1 rounded ${
+                  configTab === tab ? 'bg-primary-600 text-white' : 'text-gray-500 hover:bg-gray-100'
+                }`}
+              >
+                {tab === 'general' ? 'כללי' : tab === 'fields' ? 'שדות' : 'תנאי'}
+              </button>
+            ))}
+          </div>
+
+          {configTab === 'general' && (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">שם השלב</label>
+                <input
+                  className="input text-sm"
+                  value={stepName}
+                  onChange={(e) => setStepName(e.target.value)}
+                />
+              </div>
+              <p className="text-xs text-gray-400">
+                {t.builder.stepTypes[selectedType as keyof typeof t.builder.stepTypes] ?? selectedType}
+              </p>
+            </div>
+          )}
+
+          {configTab === 'fields' && selectedType === 'FORM' && (
+            <FormDesigner fields={fields} onChange={setFields} />
+          )}
+
+          {configTab === 'condition' && selectedType === 'CONDITION' && (
+            <ConditionEditor
+              condition={condition}
+              availableFields={(process?.steps as Record<string, unknown>[] ?? [])
+                .flatMap((s) => (s.fields as Field[] ?? []).map((f) => f.name))}
+              onChange={setCondition}
+            />
+          )}
+
+          <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
+            <button onClick={handleSaveStep} disabled={saving} className="btn-primary w-full text-sm">
+              {saving ? t.loading : t.save}
+            </button>
+            <button onClick={() => handleDeleteStep(selectedNode.id)} className="btn-secondary w-full text-sm text-red-600">
+              {t.builder.deleteStep}
+            </button>
+            <button onClick={() => setSelectedNode(null)} className="btn-secondary w-full text-sm">
+              {t.builder.close}
+            </button>
+          </div>
         </div>
       )}
     </div>

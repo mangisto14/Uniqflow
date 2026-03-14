@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ProcessExecutor } from './executor/process-executor';
+import { DependencyResolver } from './executor/dependency-resolver';
 import { HandlerRegistry } from './handlers/handler-registry';
 import { FormHandler } from './handlers/form.handler';
 import { ApprovalHandler } from './handlers/approval.handler';
@@ -13,6 +14,7 @@ import { ReviewHandler } from './handlers/review.handler';
   imports: [PrismaModule],
   providers: [
     ProcessExecutor,
+    DependencyResolver,
     HandlerRegistry,
     FormHandler,
     ApprovalHandler,
@@ -21,6 +23,6 @@ import { ReviewHandler } from './handlers/review.handler';
     NotificationHandler,
     ReviewHandler,
   ],
-  exports: [ProcessExecutor],
+  exports: [ProcessExecutor, DependencyResolver],
 })
 export class EngineModule {}

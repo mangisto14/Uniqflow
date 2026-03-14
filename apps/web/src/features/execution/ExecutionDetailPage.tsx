@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client';
 import { executionsApi } from '../../api/executions.api';
+import { useAuthStore } from '../../stores/auth.store';
 import { t } from '../../i18n';
 
 interface StepExecution {
@@ -39,6 +41,8 @@ export function ExecutionDetailPage() {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const socketRef = useRef<ReturnType<typeof io> | null>(null);
 
   const load = () => {
     if (!id) return;
@@ -52,6 +56,26 @@ export function ExecutionDetailPage() {
   };
 
   useEffect(() => { load(); }, [id]);
+
+  // Real-time WebSocket
+  useEffect(() => {
+    if (!id || !accessToken) return;
+    const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') ?? '';
+    const socket = io(`${apiBase}/executions`, {
+      auth: { token: accessToken },
+      transports: ['websocket'],
+    });
+    socketRef.current = socket;
+    socket.emit('join-execution', id);
+    socket.on('execution-updated', (data: Execution) => {
+      setExecution(data);
+    });
+    socket.on('step-updated', () => { load(); });
+    return () => {
+      socket.emit('leave-execution', id);
+      socket.disconnect();
+    };
+  }, [id, accessToken]);
 
   const handleComplete = async (stepId: string) => {
     if (!id) return;

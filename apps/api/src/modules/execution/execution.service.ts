@@ -7,6 +7,7 @@ import {
   CancelExecutionDto,
 } from './dto/create-execution.dto';
 import { ProcessExecutor } from '../../engine/executor/process-executor';
+import { ExecutionGateway } from './execution.gateway';
 import { ProcessStatus } from '@prisma/client';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class ExecutionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly executor: ProcessExecutor,
+    private readonly gateway: ExecutionGateway,
   ) {}
 
   async start(dto: CreateExecutionDto, userId: string) {
@@ -22,7 +24,9 @@ export class ExecutionService {
     if (process.status !== ProcessStatus.ACTIVE) {
       throw new BadRequestException('Only ACTIVE processes can be executed');
     }
-    return this.executor.startExecution(dto.processId, userId, dto.metadata);
+    const result = await this.executor.startExecution(dto.processId, userId, dto.metadata);
+    this.gateway.emitExecutionUpdate(result.id, result);
+    return result;
   }
 
   async findAll(page = 1, limit = 20) {
@@ -52,32 +56,40 @@ export class ExecutionService {
   }
 
   async completeStep(executionId: string, stepId: string, dto: CompleteStepDto, userId: string) {
-    return this.executor.completeStep(executionId, stepId, userId, dto.data ?? {});
+    const result = await this.executor.completeStep(executionId, stepId, userId, dto.data ?? {});
+    this.gateway.emitExecutionUpdate(executionId, result);
+    return result;
   }
 
   async rejectStep(executionId: string, stepId: string, dto: RejectStepDto, userId: string) {
-    return this.executor.rejectStep(executionId, stepId, userId, dto.reason);
+    const result = await this.executor.rejectStep(executionId, stepId, userId, dto.reason);
+    this.gateway.emitStepUpdate(executionId, result);
+    return result;
   }
 
   async pause(executionId: string) {
     await this.findOne(executionId);
-    return this.prisma.processExecution.update({
+    const result = await this.prisma.processExecution.update({
       where: { id: executionId },
       data: { status: ProcessStatus.PAUSED },
     });
+    this.gateway.emitExecutionUpdate(executionId, result);
+    return result;
   }
 
   async resume(executionId: string) {
     await this.findOne(executionId);
-    return this.prisma.processExecution.update({
+    const result = await this.prisma.processExecution.update({
       where: { id: executionId },
       data: { status: ProcessStatus.ACTIVE },
     });
+    this.gateway.emitExecutionUpdate(executionId, result);
+    return result;
   }
 
   async cancel(executionId: string, dto: CancelExecutionDto) {
     await this.findOne(executionId);
-    return this.prisma.processExecution.update({
+    const result = await this.prisma.processExecution.update({
       where: { id: executionId },
       data: {
         status: ProcessStatus.CANCELLED,
@@ -85,6 +97,8 @@ export class ExecutionService {
         metadata: { cancellationReason: dto.reason },
       },
     });
+    this.gateway.emitExecutionUpdate(executionId, result);
+    return result;
   }
 
   async getHistory(executionId: string) {
