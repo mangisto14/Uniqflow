@@ -3,6 +3,13 @@ import { useAuthStore } from './stores/auth.store';
 import { AppShell } from './components/layout/AppShell';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
+import { ProcessesPage } from './features/processes/ProcessesPage';
+import { BuilderPage } from './features/builder/BuilderPage';
+import { ExecutionListPage } from './features/execution/ExecutionListPage';
+import { ExecutionDetailPage } from './features/execution/ExecutionDetailPage';
+import { TeamDashboardPage } from './features/team-dashboard/TeamDashboardPage';
+import { UsersPage } from './features/admin/UsersPage';
+import { TeamsPage } from './features/admin/TeamsPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => !!s.accessToken);
@@ -24,6 +31,13 @@ export function AppRoutes() {
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="processes" element={<ProcessesPage />} />
+        <Route path="processes/:id/builder" element={<BuilderPage />} />
+        <Route path="executions" element={<ExecutionListPage />} />
+        <Route path="executions/:id" element={<ExecutionDetailPage />} />
+        <Route path="team" element={<TeamDashboardPage />} />
+        <Route path="admin/users" element={<UsersPage />} />
+        <Route path="admin/teams" element={<TeamsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

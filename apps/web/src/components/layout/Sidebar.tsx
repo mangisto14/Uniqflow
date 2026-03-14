@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useUIStore } from '../../stores/ui.store';
+import { useAuthStore } from '../../stores/auth.store';
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: '📊' },
@@ -8,8 +9,15 @@ const NAV_ITEMS = [
   { to: '/team', label: 'Team', icon: '👥' },
 ];
 
+const ADMIN_ITEMS = [
+  { to: '/admin/users', label: 'Users', icon: '👤' },
+  { to: '/admin/teams', label: 'Teams', icon: '🏢' },
+];
+
 export function Sidebar() {
   const sidebarOpen = useUIStore((s) => s.sidebarOpen);
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = user && ['SUPER_ADMIN', 'ADMIN'].includes((user as { role: string }).role);
 
   return (
     <aside
@@ -39,6 +47,30 @@ export function Sidebar() {
             {sidebarOpen && <span>{item.label}</span>}
           </NavLink>
         ))}
+
+        {isAdmin && (
+          <>
+            {sidebarOpen && (
+              <p className="px-3 pt-4 pb-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin</p>
+            )}
+            {ADMIN_ITEMS.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-primary-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  }`
+                }
+              >
+                <span className="text-lg">{item.icon}</span>
+                {sidebarOpen && <span>{item.label}</span>}
+              </NavLink>
+            ))}
+          </>
+        )}
       </nav>
     </aside>
   );
