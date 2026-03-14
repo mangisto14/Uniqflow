@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../api/client';
 import { useAuthStore } from '../../stores/auth.store';
+import { t } from '../../i18n';
 
 interface TeamMember {
   id: string;
@@ -49,23 +50,23 @@ export function TeamDashboardPage() {
   const teamId = (user as unknown as Record<string, unknown>)?.teamId;
   if (!teamId) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Team Dashboard</h1>
-        <div className="card text-center py-12 text-gray-500">You are not assigned to a team.</div>
+      <div className="space-y-4" dir="rtl">
+        <h1 className="text-2xl font-bold text-gray-900">{t.teamDashboard.title}</h1>
+        <div className="card text-center py-12 text-gray-500">{t.teamDashboard.noTeam}</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Team Dashboard</h1>
+    <div className="space-y-6" dir="rtl">
+      <h1 className="text-2xl font-bold text-gray-900">{t.teamDashboard.title}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Inbox */}
         <div className="card space-y-3">
-          <h2 className="font-semibold text-gray-800">Active Executions ({inbox.length})</h2>
+          <h2 className="font-semibold text-gray-800">{t.teamDashboard.activeExecutions} ({inbox.length})</h2>
           {inbox.length === 0 ? (
-            <p className="text-sm text-gray-500">No active work items.</p>
+            <p className="text-sm text-gray-500">{t.teamDashboard.noActiveWork}</p>
           ) : (
             <div className="space-y-2">
               {inbox.map((ex) => {
@@ -76,11 +77,11 @@ export function TeamDashboardPage() {
                       <p className="font-medium text-sm text-gray-900">{ex.process.name}</p>
                       {activeStep && (
                         <p className="text-xs text-gray-500">
-                          Waiting: {activeStep.step.name} ({activeStep.step.type})
+                          {t.teamDashboard.waiting}: {activeStep.step.name}
                         </p>
                       )}
                     </div>
-                    <a href={`/executions/${ex.id}`} className="text-primary-600 text-xs hover:underline">View</a>
+                    <a href={`/executions/${ex.id}`} className="text-primary-600 text-xs hover:underline">{t.teamDashboard.view}</a>
                   </div>
                 );
               })}
@@ -90,9 +91,9 @@ export function TeamDashboardPage() {
 
         {/* Members */}
         <div className="card space-y-3">
-          <h2 className="font-semibold text-gray-800">Team Members ({members.length})</h2>
+          <h2 className="font-semibold text-gray-800">{t.teamDashboard.teamMembers} ({members.length})</h2>
           {members.length === 0 ? (
-            <p className="text-sm text-gray-500">No members.</p>
+            <p className="text-sm text-gray-500">{t.teamDashboard.noMembers}</p>
           ) : (
             <div className="space-y-2">
               {members.map((m) => (

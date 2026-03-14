@@ -7,14 +7,15 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { processesApi } from '../../api/processes.api';
 import { apiClient } from '../../api/client';
+import { t } from '../../i18n';
 
 const NODE_TYPES_OPTIONS = [
-  { type: 'FORM', label: 'Form', color: '#3b82f6' },
-  { type: 'APPROVAL', label: 'Approval', color: '#10b981' },
-  { type: 'CONDITION', label: 'Condition', color: '#f59e0b' },
-  { type: 'TASK', label: 'Task', color: '#8b5cf6' },
-  { type: 'NOTIFICATION', label: 'Notification', color: '#6366f1' },
-  { type: 'REVIEW', label: 'Review', color: '#ef4444' },
+  { type: 'FORM', label: t.builder.stepTypes.FORM, color: '#3b82f6' },
+  { type: 'APPROVAL', label: t.builder.stepTypes.APPROVAL, color: '#10b981' },
+  { type: 'CONDITION', label: t.builder.stepTypes.CONDITION, color: '#f59e0b' },
+  { type: 'TASK', label: t.builder.stepTypes.TASK, color: '#8b5cf6' },
+  { type: 'NOTIFICATION', label: t.builder.stepTypes.NOTIFICATION, color: '#6366f1' },
+  { type: 'REVIEW', label: t.builder.stepTypes.REVIEW, color: '#ef4444' },
 ];
 
 function stepToNode(step: Record<string, unknown>, index: number): Node {
@@ -50,7 +51,6 @@ export function BuilderPage() {
       setProcess(p as Record<string, unknown>);
       const steps = (p.steps as Record<string, unknown>[]) ?? [];
       setNodes(steps.map((s, i) => stepToNode(s, i)));
-      // Build edges from step order
       const edgeList: Edge[] = [];
       for (let i = 0; i < steps.length - 1; i++) {
         edgeList.push({
@@ -88,9 +88,7 @@ export function BuilderPage() {
     setSaving(true);
     try {
       for (const node of nodes) {
-        await apiClient.put(`/processes/${id}/steps/${node.id}`, {
-          position: node.position,
-        });
+        await apiClient.put(`/processes/${id}/steps/${node.id}`, { position: node.position });
       }
     } finally {
       setSaving(false);
@@ -106,26 +104,26 @@ export function BuilderPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] gap-4">
+    <div className="flex h-[calc(100vh-8rem)] gap-4" dir="rtl">
       {/* Palette */}
       <div className="w-48 flex-shrink-0 space-y-2">
-        <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Add Step</h2>
-        {NODE_TYPES_OPTIONS.map((t) => (
+        <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">{t.builder.addStep}</h2>
+        {NODE_TYPES_OPTIONS.map((tp) => (
           <button
-            key={t.type}
-            onClick={() => handleAddStep(t.type, t.label)}
-            className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium border-2 transition-colors hover:opacity-80"
-            style={{ borderColor: t.color, color: t.color, background: t.color + '11' }}
+            key={tp.type}
+            onClick={() => handleAddStep(tp.type, tp.label)}
+            className="w-full text-right px-3 py-2 rounded-lg text-sm font-medium border-2 transition-colors hover:opacity-80"
+            style={{ borderColor: tp.color, color: tp.color, background: tp.color + '11' }}
           >
-            {t.label}
+            {tp.label}
           </button>
         ))}
         <div className="pt-4 space-y-2">
           <button onClick={handleSavePositions} disabled={saving} className="btn-secondary w-full text-sm">
-            {saving ? 'Saving...' : 'Save Layout'}
+            {saving ? t.loading : t.builder.saveLayout}
           </button>
-          <button onClick={() => navigate(`/processes`)} className="btn-secondary w-full text-sm">
-            Back
+          <button onClick={() => navigate('/processes')} className="btn-secondary w-full text-sm">
+            {t.back}
           </button>
         </div>
       </div>
@@ -133,8 +131,8 @@ export function BuilderPage() {
       {/* Canvas */}
       <div className="flex-1 border border-gray-200 rounded-xl overflow-hidden bg-white">
         <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-gray-50">
-          <span className="font-semibold text-gray-800">{(process?.name as string) ?? 'Builder'}</span>
-          <span className="text-xs text-gray-400">{nodes.length} steps</span>
+          <span className="font-semibold text-gray-800">{(process?.name as string) ?? t.builder.title}</span>
+          <span className="text-xs text-gray-400">{nodes.length} {t.builder.steps}</span>
         </div>
         <ReactFlow
           nodes={nodes}
@@ -153,17 +151,14 @@ export function BuilderPage() {
       {/* Config panel */}
       {selectedNode && (
         <div className="w-56 flex-shrink-0 card space-y-3">
-          <h3 className="font-semibold text-gray-800">Step</h3>
+          <h3 className="font-semibold text-gray-800">שלב</h3>
           <p className="text-sm text-gray-600">{selectedNode.data.label}</p>
-          <p className="text-xs text-gray-400 uppercase">{selectedNode.data.type}</p>
-          <button
-            onClick={() => handleDeleteStep(selectedNode.id)}
-            className="w-full btn-secondary text-sm text-red-600 hover:text-red-700"
-          >
-            Delete Step
+          <p className="text-xs text-gray-400">{t.builder.stepTypes[selectedNode.data.type as keyof typeof t.builder.stepTypes] ?? selectedNode.data.type}</p>
+          <button onClick={() => handleDeleteStep(selectedNode.id)} className="w-full btn-secondary text-sm text-red-600 hover:text-red-700">
+            {t.builder.deleteStep}
           </button>
           <button onClick={() => setSelectedNode(null)} className="w-full btn-secondary text-sm">
-            Close
+            {t.builder.close}
           </button>
         </div>
       )}

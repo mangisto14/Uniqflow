@@ -1,72 +1,71 @@
 import { NavLink } from 'react-router-dom';
 import { useUIStore } from '../../stores/ui.store';
 import { useAuthStore } from '../../stores/auth.store';
+import { t } from '../../i18n';
 
-const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { to: '/processes', label: 'Processes', icon: '⚙️' },
-  { to: '/executions', label: 'Executions', icon: '▶️' },
-  { to: '/team', label: 'Team', icon: '👥' },
+const navItems = [
+  { to: '/dashboard', label: t.nav.dashboard, icon: '📊' },
+  { to: '/processes', label: t.nav.processes, icon: '⚙️' },
+  { to: '/executions', label: t.nav.executions, icon: '▶️' },
+  { to: '/team', label: t.nav.team, icon: '👥' },
 ];
 
-const ADMIN_ITEMS = [
-  { to: '/admin/users', label: 'Users', icon: '👤' },
-  { to: '/admin/teams', label: 'Teams', icon: '🏢' },
+const adminItems = [
+  { to: '/admin/users', label: t.nav.users, icon: '👤' },
+  { to: '/admin/teams', label: t.nav.teams, icon: '🏢' },
 ];
 
 export function Sidebar() {
   const sidebarOpen = useUIStore((s) => s.sidebarOpen);
   const user = useAuthStore((s) => s.user);
-  const isAdmin = user && ['SUPER_ADMIN', 'ADMIN'].includes((user as { role: string }).role);
+  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
+
+  if (!sidebarOpen) return null;
 
   return (
-    <aside
-      className={`fixed inset-y-0 left-0 z-50 bg-gray-900 text-white transition-all duration-200 ${
-        sidebarOpen ? 'w-64' : 'w-16'
-      }`}
-    >
-      <div className="flex items-center h-16 px-4 border-b border-gray-700">
-        {sidebarOpen && (
-          <span className="text-lg font-bold text-primary-400">Uniqflow</span>
-        )}
+    <aside className="w-56 flex-shrink-0 bg-white border-l border-gray-200 flex flex-col" dir="rtl">
+      <div className="p-4 border-b border-gray-100">
+        <h1 className="text-xl font-bold text-primary-700">Uniqflow</h1>
+        <p className="text-xs text-gray-400 mt-0.5">מיוחדים</p>
       </div>
-      <nav className="mt-4 px-2 space-y-1">
-        {NAV_ITEMS.map((item) => (
+
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 isActive
-                  ? 'bg-primary-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`
             }
           >
-            <span className="text-lg">{item.icon}</span>
-            {sidebarOpen && <span>{item.label}</span>}
+            <span>{item.icon}</span>
+            <span>{item.label}</span>
           </NavLink>
         ))}
 
         {isAdmin && (
           <>
-            {sidebarOpen && (
-              <p className="px-3 pt-4 pb-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin</p>
-            )}
-            {ADMIN_ITEMS.map((item) => (
+            <div className="pt-3 pb-1 px-3">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t.nav.admin}</p>
+            </div>
+            {adminItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-primary-600 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                      ? 'bg-primary-50 text-primary-700'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`
                 }
               >
-                <span className="text-lg">{item.icon}</span>
-                {sidebarOpen && <span>{item.label}</span>}
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
               </NavLink>
             ))}
           </>

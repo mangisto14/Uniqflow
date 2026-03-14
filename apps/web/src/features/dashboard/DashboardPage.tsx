@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { processesApi } from '../../api/processes.api';
 import { executionsApi } from '../../api/executions.api';
+import { t } from '../../i18n';
 
 interface Stats {
   processes: number;
@@ -35,20 +36,20 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+    <div className="space-y-6" dir="rtl">
+      <h1 className="text-2xl font-bold text-gray-900">{t.dashboard.title}</h1>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <div className="card">
-          <p className="text-sm font-medium text-gray-500">Total Processes</p>
+          <p className="text-sm font-medium text-gray-500">{t.dashboard.totalProcesses}</p>
           <p className="mt-2 text-3xl font-bold text-gray-900">{stats.processes}</p>
         </div>
         <div className="card">
-          <p className="text-sm font-medium text-gray-500">Total Executions</p>
+          <p className="text-sm font-medium text-gray-500">{t.dashboard.totalExecutions}</p>
           <p className="mt-2 text-3xl font-bold text-gray-900">{stats.activeExecutions}</p>
         </div>
         <div className="card">
-          <p className="text-sm font-medium text-gray-500">Platform</p>
+          <p className="text-sm font-medium text-gray-500">{t.dashboard.platform}</p>
           <p className="mt-2 text-lg font-semibold text-primary-600">Uniqflow v1.0</p>
         </div>
       </div>

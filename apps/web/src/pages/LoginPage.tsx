@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { t } from '../i18n';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -18,18 +19,18 @@ export function LoginPage() {
       await login({ email, password });
       navigate('/dashboard');
     } catch {
-      setError('Invalid email or password');
+      setError(t.auth.invalidCredentials);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50" dir="rtl">
       <div className="max-w-md w-full space-y-8 p-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900">Uniqflow</h1>
-          <p className="mt-2 text-gray-600">Sign in to your account</p>
+          <p className="mt-2 text-gray-600">{t.auth.signInSubtitle}</p>
         </div>
 
         <form className="mt-8 space-y-6 card" onSubmit={handleSubmit}>
@@ -41,7 +42,7 @@ export function LoginPage() {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.auth.email}</label>
               <input
                 type="email"
                 value={email}
@@ -52,7 +53,7 @@ export function LoginPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.auth.password}</label>
               <input
                 type="password"
                 value={password}
@@ -65,7 +66,7 @@ export function LoginPage() {
           </div>
 
           <button type="submit" className="btn-primary w-full" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? t.auth.signingIn : t.auth.signIn}
           </button>
         </form>
       </div>
