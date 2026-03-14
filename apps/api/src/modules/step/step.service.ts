@@ -53,20 +53,45 @@ export class StepService {
 
   async update(processId: string, stepId: string, dto: UpdateStepDto) {
     await this.findOne(processId, stepId);
-    return this.prisma.processStep.update({
-      where: { id: stepId },
-      data: {
-        name: dto.name,
-        description: dto.description,
-        type: dto.type,
-        config: dto.config as Prisma.InputJsonValue | undefined,
-        position: dto.position as Prisma.InputJsonValue | undefined,
-        order: dto.order,
-        assignedTeamId: dto.assignedTeamId,
-        timeoutMinutes: dto.timeoutMinutes,
-        isRequired: dto.isRequired,
-      },
-      include: { fields: true, branches: true },
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.processStep.update({
+        where: { id: stepId },
+        data: {
+          name: dto.name,
+          description: dto.description,
+          type: dto.type,
+          config: dto.config as Prisma.InputJsonValue | undefined,
+          position: dto.position as Prisma.InputJsonValue | undefined,
+          order: dto.order,
+          assignedTeamId: dto.assignedTeamId,
+          timeoutMinutes: dto.timeoutMinutes,
+          isRequired: dto.isRequired,
+        },
+      });
+
+      if (dto.fields !== undefined) {
+        await tx.stepField.deleteMany({ where: { stepId } });
+        if (dto.fields.length > 0) {
+          await tx.stepField.createMany({
+            data: dto.fields.map((f, i) => ({
+              stepId,
+              name: f.name,
+              label: f.label,
+              fieldType: f.fieldType,
+              required: f.required ?? false,
+              placeholder: f.placeholder,
+              options: f.options ? f.options.split(',').map((o) => o.trim()) : undefined,
+              order: f.order ?? i,
+            })),
+          });
+        }
+      }
+
+      return tx.processStep.findUniqueOrThrow({
+        where: { id: stepId },
+        include: { fields: true, branches: true },
+      });
     });
   }
 
