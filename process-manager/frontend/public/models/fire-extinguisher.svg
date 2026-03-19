@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 360">
+  <rect width="160" height="360" fill="#f8fafc"/>
+
+  <!-- Handle/carry -->
+  <rect x="55" y="10" width="50" height="16" rx="8" fill="#dc2626" stroke="#b91c1c" stroke-width="2"/>
+  <!-- Handle grip -->
+  <rect x="58" y="12" width="44" height="12" rx="6" fill="#ef4444"/>
+
+  <!-- Pin -->
+  <rect x="47" y="16" width="6" height="22" rx="3" fill="#6b7280"/>
+  <circle cx="50" cy="15" r="5" fill="#9ca3af" stroke="#6b7280" stroke-width="1.5"/>
+  <!-- Pin label -->
+  <text x="36" y="15" font-size="7" fill="#6b7280" font-family="sans-serif">PIN</text>
+
+  <!-- Lever handle -->
+  <rect x="45" y="22" width="10" height="24" rx="4" fill="#b91c1c" stroke="#991b1b" stroke-width="1.5"/>
+
+  <!-- Pressure gauge -->
+  <circle cx="80" cy="65" r="28" fill="white" stroke="#9ca3af" stroke-width="3"/>
+  <circle cx="80" cy="65" r="24" fill="#f8fafc"/>
+  <!-- Gauge arc green zone -->
+  <path d="M 58 72 A 24 24 0 0 1 102 72" fill="none" stroke="#86efac" stroke-width="5"/>
+  <!-- Gauge needle -->
+  <line x1="80" y1="65" x2="80" y2="44" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="80" cy="65" r="3" fill="#374151"/>
+  <!-- Gauge labels -->
+  <text x="57" y="88" font-size="7" fill="#6b7280" font-family="sans-serif">0</text>
+  <text x="100" y="88" font-size="7" fill="#6b7280" font-family="sans-serif">20</text>
+  <text x="73" y="44" font-size="7" fill="#374151" font-family="sans-serif">10</text>
+
+  <!-- Neck / valve -->
+  <rect x="68" y="90" width="24" height="20" rx="4" fill="#b91c1c" stroke="#991b1b" stroke-width="1.5"/>
+
+  <!-- Hose -->
+  <path d="M 110 62 Q 135 62 138 80 Q 141 100 125 108" fill="none" stroke="#374151" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Nozzle -->
+  <ellipse cx="120" cy="112" rx="10" ry="6" fill="#1f2937" transform="rotate(-20 120 112)"/>
+  <text x="115" y="130" font-size="8" fill="#374151" font-family="sans-serif">Nozzle</text>
+
+  <!-- Main cylinder body -->
+  <rect x="42" y="105" width="76" height="195" rx="18" fill="#dc2626" stroke="#b91c1c" stroke-width="2"/>
+  <!-- Body highlight -->
+  <rect x="50" y="112" width="20" height="175" rx="10" fill="#ef4444" opacity="0.4"/>
+  <!-- Label area -->
+  <rect x="46" y="140" width="68" height="120" rx="8" fill="white" opacity="0.9"/>
+  <text x="80" y="162" text-anchor="middle" font-size="10" fill="#dc2626" font-weight="bold" font-family="sans-serif">FIRE</text>
+  <text x="80" y="178" text-anchor="middle" font-size="10" fill="#dc2626" font-weight="bold" font-family="sans-serif">EXTINGUISHER</text>
+  <text x="80" y="200" text-anchor="middle" font-size="8" fill="#374151" font-family="sans-serif">CO₂ / ABC Type</text>
+  <text x="80" y="215" text-anchor="middle" font-size="8" fill="#374151" font-family="sans-serif">6 kg</text>
+  <!-- Safety instructions icon -->
+  <circle cx="80" cy="238" r="10" fill="#fef9c3" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="80" y="242" text-anchor="middle" font-size="10" fill="#92400e" font-family="sans-serif">!</text>
+
+  <!-- Bottom cap -->
+  <rect x="44" y="293" width="72" height="18" rx="9" fill="#b91c1c" stroke="#991b1b" stroke-width="2"/>
+
+  <!-- Base stand -->
+  <rect x="38" y="308" width="84" height="22" rx="8" fill="#7f1d1d"/>
+  <rect x="30" y="326" width="100" height="10" rx="5" fill="#991b1b"/>
+</svg>

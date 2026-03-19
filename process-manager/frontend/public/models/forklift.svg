@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250">
+  <rect width="400" height="250" fill="#f8fafc"/>
+
+  <!-- Ground -->
+  <rect x="0" y="210" width="400" height="40" fill="#e2e8f0"/>
+
+  <!-- Main body -->
+  <rect x="80" y="110" width="240" height="100" rx="8" fill="#94a3b8"/>
+  <rect x="82" y="112" width="236" height="96" rx="6" fill="#cbd5e1"/>
+
+  <!-- Cab -->
+  <rect x="200" y="60" width="110" height="60" rx="6" fill="#64748b"/>
+  <rect x="205" y="65" width="100" height="50" rx="4" fill="#7dd3fc"/>
+  <!-- Cab window frame -->
+  <rect x="205" y="65" width="100" height="50" rx="4" fill="none" stroke="#475569" stroke-width="2"/>
+
+  <!-- Mast -->
+  <rect x="62" y="50" width="12" height="120" rx="4" fill="#475569"/>
+  <rect x="76" y="50" width="8" height="120" rx="3" fill="#64748b"/>
+
+  <!-- Forks -->
+  <rect x="15" y="128" width="62" height="8" rx="3" fill="#334155"/>
+  <rect x="15" y="148" width="62" height="8" rx="3" fill="#334155"/>
+
+  <!-- Fork tips -->
+  <polygon points="15,128 5,132 15,136" fill="#1e293b"/>
+  <polygon points="15,148 5,152 15,156" fill="#1e293b"/>
+
+  <!-- Rear counterweight -->
+  <rect x="310" y="130" width="60" height="80" rx="6" fill="#475569"/>
+
+  <!-- Wheels -->
+  <circle cx="130" cy="210" r="28" fill="#1e293b"/>
+  <circle cx="130" cy="210" r="18" fill="#334155"/>
+  <circle cx="130" cy="210" r="8" fill="#64748b"/>
+  <circle cx="290" cy="210" r="28" fill="#1e293b"/>
+  <circle cx="290" cy="210" r="18" fill="#334155"/>
+  <circle cx="290" cy="210" r="8" fill="#64748b"/>
+
+  <!-- Battery -->
+  <rect x="220" y="120" width="50" height="30" rx="4" fill="#fbbf24" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="245" y="140" text-anchor="middle" font-size="10" fill="#92400e" font-weight="bold">BAT</text>
+
+  <!-- Engine hood -->
+  <rect x="200" y="110" width="100" height="15" rx="3" fill="#475569"/>
+
+  <!-- Exhaust -->
+  <rect x="295" y="70" width="8" height="40" rx="3" fill="#374151"/>
+  <ellipse cx="299" cy="68" rx="6" ry="4" fill="#6b7280"/>
+</svg>
