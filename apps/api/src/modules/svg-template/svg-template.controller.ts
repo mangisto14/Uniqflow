@@ -11,6 +11,8 @@ import {
   DefaultValuePipe,
   ParseBoolPipe,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -56,5 +58,27 @@ export class SvgTemplateController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.svgTemplateService.remove(id);
+  }
+
+  @Post(':id/clone')
+  clone(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.svgTemplateService.clone(id, userId);
+  }
+
+  @Post(':id/attach/:processId')
+  @HttpCode(HttpStatus.OK)
+  attach(@Param('id') id: string, @Param('processId') processId: string) {
+    return this.svgTemplateService.attachToProcess(id, processId);
+  }
+
+  @Delete(':id/attach/:processId')
+  @HttpCode(HttpStatus.OK)
+  detach(@Param('id') id: string, @Param('processId') processId: string) {
+    return this.svgTemplateService.detachFromProcess(id, processId);
+  }
+
+  @Get('process/:processId/attachments')
+  getProcessAttachments(@Param('processId') processId: string) {
+    return this.svgTemplateService.getProcessAttachments(processId);
   }
 }

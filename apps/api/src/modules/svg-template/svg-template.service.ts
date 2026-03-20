@@ -76,4 +76,48 @@ export class SvgTemplateService {
     await this.findOne(id);
     return this.prisma.svgTemplate.delete({ where: { id } });
   }
+
+  async clone(id: string, userId: string) {
+    const original = await this.findOne(id);
+    return this.prisma.svgTemplate.create({
+      data: {
+        name: `${original.name} (עותק)`,
+        description: original.description,
+        svgContent: original.svgContent,
+        thumbnail: original.thumbnail,
+        pointsConfig: original.pointsConfig as object[],
+        isActive: true,
+        isBuiltIn: false,
+        createdById: userId,
+      },
+      include: { createdBy: { select: { id: true, name: true } } },
+    });
+  }
+
+  async attachToProcess(templateId: string, processId: string) {
+    return this.prisma.processSvgAttachment.upsert({
+      where: { processId_templateId: { processId, templateId } },
+      update: {},
+      create: { processId, templateId },
+      include: { template: { select: { id: true, name: true, thumbnail: true, description: true } } },
+    });
+  }
+
+  async detachFromProcess(templateId: string, processId: string) {
+    return this.prisma.processSvgAttachment.deleteMany({
+      where: { processId, templateId },
+    });
+  }
+
+  async getProcessAttachments(processId: string) {
+    return this.prisma.processSvgAttachment.findMany({
+      where: { processId },
+      include: {
+        template: {
+          select: { id: true, name: true, description: true, thumbnail: true, pointsConfig: true, svgContent: true },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
 }

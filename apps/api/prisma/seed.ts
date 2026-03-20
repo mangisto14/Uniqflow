@@ -352,6 +352,86 @@ async function main() {
   });
 
   console.log(`Created processes: ${process1.name}, ${process2.name}, ${process3.name}`);
+
+  // ── Built-in SVG Templates ──────────────────────────────────────────────────
+  const truckSvg = `<svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+  <rect x="20" y="80" width="360" height="60" rx="8" fill="#4b5563"/>
+  <path d="M200 80 L182 42 L322 42 L340 80 Z" fill="#6b7280"/>
+  <path d="M208 78 L194 50 L308 50 L320 78 Z" fill="#bfdbfe" opacity="0.85"/>
+  <rect x="25" y="56" width="168" height="34" rx="4" fill="#374151" stroke="#6b7280" stroke-width="1.5"/>
+  <line x1="80" y1="56" x2="80" y2="90" stroke="#6b7280" stroke-width="1" stroke-dasharray="4,3" opacity="0.6"/>
+  <line x1="130" y1="56" x2="130" y2="90" stroke="#6b7280" stroke-width="1" stroke-dasharray="4,3" opacity="0.6"/>
+  <rect x="348" y="88" width="22" height="12" rx="3" fill="#9ca3af"/>
+  <rect x="30" y="88" width="22" height="12" rx="3" fill="#9ca3af"/>
+  <circle cx="90" cy="147" r="26" fill="#1f2937"/>
+  <circle cx="90" cy="147" r="15" fill="#374151"/>
+  <circle cx="90" cy="147" r="8" fill="#9ca3af"/>
+  <circle cx="300" cy="147" r="26" fill="#1f2937"/>
+  <circle cx="300" cy="147" r="15" fill="#374151"/>
+  <circle cx="300" cy="147" r="8" fill="#9ca3af"/>
+  <rect x="64" y="133" width="272" height="18" rx="5" fill="#374151"/>
+  <rect x="352" y="74" width="11" height="17" rx="3" fill="#fef08a"/>
+  <rect x="37" y="74" width="11" height="17" rx="3" fill="#fca5a5"/>
+  <text x="75" y="77" font-family="sans-serif" font-size="9" fill="#9ca3af" opacity="0.7">ארגז משא</text>
+</svg>`;
+
+  const personSvg = `<svg viewBox="0 0 120 230" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+  <circle cx="60" cy="34" r="26" fill="#fde68a"/>
+  <path d="M34 28 Q60 6 86 28 Q83 14 60 11 Q37 14 34 28 Z" fill="#92400e"/>
+  <circle cx="50" cy="30" r="4" fill="#1e3a5f"/>
+  <circle cx="70" cy="30" r="4" fill="#1e3a5f"/>
+  <circle cx="51" cy="29" r="1.5" fill="white"/>
+  <circle cx="71" cy="29" r="1.5" fill="white"/>
+  <path d="M50 43 Q60 52 70 43" fill="none" stroke="#92400e" stroke-width="2" stroke-linecap="round"/>
+  <rect x="52" y="58" width="16" height="12" fill="#fde68a"/>
+  <path d="M20 82 L44 68 L60 80 L76 68 L100 82 L100 152 L20 152 Z" fill="#3b82f6"/>
+  <path d="M44 68 L60 92 L76 68" fill="#eff6ff"/>
+  <rect x="6" y="84" width="17" height="52" rx="8" fill="#3b82f6"/>
+  <rect x="97" y="84" width="17" height="52" rx="8" fill="#3b82f6"/>
+  <ellipse cx="14" cy="140" rx="10" ry="11" fill="#fde68a"/>
+  <ellipse cx="106" cy="140" rx="10" ry="11" fill="#fde68a"/>
+  <rect x="20" y="152" width="80" height="52" fill="#1e3a5f"/>
+  <line x1="60" y1="152" x2="60" y2="204" stroke="#172554" stroke-width="3"/>
+  <ellipse cx="40" cy="207" rx="21" ry="9" fill="#1c1917"/>
+  <ellipse cx="80" cy="207" rx="21" ry="9" fill="#1c1917"/>
+  <rect x="50" y="106" width="20" height="26" rx="3" fill="white" opacity="0.92"/>
+  <rect x="54" y="110" width="12" height="4" rx="1" fill="#93c5fd"/>
+  <rect x="54" y="117" width="12" height="2" rx="1" fill="#d1d5db"/>
+  <rect x="54" y="122" width="8" height="2" rx="1" fill="#d1d5db"/>
+  <rect x="57" y="102" width="6" height="6" rx="1" fill="#d1d5db"/>
+</svg>`;
+
+  await prisma.svgTemplate.upsert({
+    where: { id: 'tpl-pickup-truck' },
+    update: {},
+    create: {
+      id: 'tpl-pickup-truck',
+      name: 'רכב טנדר',
+      description: 'תבנית SVG של רכב טנדר לסימון נזקים, ציוד ומיקומים',
+      svgContent: truckSvg,
+      pointsConfig: [],
+      isActive: true,
+      isBuiltIn: true,
+      createdById: adminUser.id,
+    },
+  });
+
+  await prisma.svgTemplate.upsert({
+    where: { id: 'tpl-person-employee' },
+    update: {},
+    create: {
+      id: 'tpl-person-employee',
+      name: 'דמות עובד',
+      description: 'תבנית SVG של דמות אדם לסימון פציעות, ציוד מגן וממצאים',
+      svgContent: personSvg,
+      pointsConfig: [],
+      isActive: true,
+      isBuiltIn: true,
+      createdById: adminUser.id,
+    },
+  });
+
+  console.log('Created 2 built-in SVG templates (טנדר + עובד)');
   console.log('\nSeed complete!');
   console.log('\nDefault credentials:');
   console.log('  Email: admin@uniqflow.io');

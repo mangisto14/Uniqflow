@@ -7,4 +7,11 @@ export const svgTemplatesApi = {
   create: (data: unknown) => apiClient.post('/svg-templates', data),
   update: (id: string, data: unknown) => apiClient.put(`/svg-templates/${id}`, data),
   delete: (id: string) => apiClient.delete(`/svg-templates/${id}`),
+  clone: (id: string) => apiClient.post(`/svg-templates/${id}/clone`, {}),
+  attachToProcess: (templateId: string, processId: string) =>
+    apiClient.post(`/svg-templates/${templateId}/attach/${processId}`, {}),
+  detachFromProcess: (templateId: string, processId: string) =>
+    apiClient.delete(`/svg-templates/${templateId}/attach/${processId}`),
+  getProcessAttachments: (processId: string) =>
+    apiClient.get(`/svg-templates/process/${processId}/attachments`),
 };

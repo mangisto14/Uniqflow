@@ -87,9 +87,10 @@ model Process {
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
 
-  createdBy  User               @relation(fields: [createdById], references: [id])
-  steps      ProcessStep[]
-  executions ProcessExecution[]
+  createdBy      User                   @relation(fields: [createdById], references: [id])
+  steps          ProcessStep[]
+  executions     ProcessExecution[]
+  svgAttachments ProcessSvgAttachment[]
 
   @@index([status])
   @@index([createdById])
@@ -298,14 +299,30 @@ model SvgTemplate {
   thumbnail   String?
   pointsConfig Json    @default("[]") @map("points_config")
   isActive    Boolean  @default(true) @map("is_active")
+  isBuiltIn   Boolean  @default(false) @map("is_built_in")
   createdById String   @map("created_by_id")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  createdBy User @relation(fields: [createdById], references: [id])
+  createdBy          User                   @relation(fields: [createdById], references: [id])
+  processAttachments ProcessSvgAttachment[]
 
   @@index([createdById])
   @@map("svg_templates")
+}
+
+model ProcessSvgAttachment {
+  id         String   @id @default(cuid())
+  processId  String   @map("process_id")
+  templateId String   @map("template_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  process  Process     @relation(fields: [processId], references: [id], onDelete: Cascade)
+  template SvgTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([processId, templateId])
+  @@index([processId])
+  @@map("process_svg_attachments")
 }
 
 model DispatchRecord {
