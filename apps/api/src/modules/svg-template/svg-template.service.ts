@@ -38,6 +38,7 @@ export class SvgTemplateService {
           description: true,
           thumbnail: true,
           isActive: true,
+          isBuiltIn: true,
           createdAt: true,
           createdBy: { select: { id: true, name: true } },
         },
