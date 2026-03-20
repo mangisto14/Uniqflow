@@ -85,6 +85,7 @@ export const he = {
       TASK: 'משימה',
       NOTIFICATION: 'התראה',
       REVIEW: 'סקירה',
+      SVG_MODEL: 'מודל SVG',
     },
   },
 
@@ -150,6 +151,30 @@ export const he = {
     members: 'חברים',
     assignedSteps: 'שלבים מוקצים',
     inactive: 'לא פעיל',
+  },
+
+  // SVG Templates
+  svgTemplates: {
+    title: 'טמפלטי SVG',
+    newTemplate: '+ טמפלט חדש',
+    uploadSvg: 'העלה SVG',
+    templateName: 'שם הטמפלט',
+    noTemplates: 'אין טמפלטים. העלה את הראשון!',
+    pointsConfig: 'הגדרת נקודות',
+    addPoint: '+ נקודה',
+    pointLabel: 'שם הנקודה',
+    pointFieldType: 'סוג שדה',
+    clickToPlace: 'לחץ על ה-SVG כדי להוסיף נקודה',
+    saveTemplate: 'שמור טמפלט',
+    editPoints: 'ערוך נקודות',
+    deletePoint: 'מחק נקודה',
+    selectTemplate: 'בחר טמפלט',
+    configurePoints: 'הגדר נקודות',
+    fillPoints: 'מלא נקודות',
+    noPoints: 'אין נקודות מוגדרות',
+    active: 'פעיל',
+    inactive: 'לא פעיל',
+    preview: 'תצוגה מקדימה',
   },
 
   // TopBar

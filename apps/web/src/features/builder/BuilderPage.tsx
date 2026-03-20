@@ -7,6 +7,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { processesApi } from '../../api/processes.api';
 import { apiClient } from '../../api/client';
+import { svgTemplatesApi } from '../../api/svg-templates.api';
 import { t } from '../../i18n';
 import { FormDesigner } from '../forms/FormDesigner';
 import { ConditionEditor, IConditionGroup, createEmptyCondition } from '../conditions/ConditionEditor';
@@ -18,6 +19,7 @@ const NODE_TYPES_OPTIONS = [
   { type: 'TASK', label: t.builder.stepTypes.TASK, color: '#8b5cf6' },
   { type: 'NOTIFICATION', label: t.builder.stepTypes.NOTIFICATION, color: '#6366f1' },
   { type: 'REVIEW', label: t.builder.stepTypes.REVIEW, color: '#ef4444' },
+  { type: 'SVG_MODEL', label: t.builder.stepTypes.SVG_MODEL, color: '#0891b2' },
 ];
 
 type FieldType = 'text' | 'number' | 'email' | 'date' | 'select' | 'textarea' | 'checkbox';
@@ -55,7 +57,16 @@ export function BuilderPage() {
   const [stepName, setStepName] = useState('');
   const [fields, setFields] = useState<Field[]>([]);
   const [condition, setCondition] = useState<IConditionGroup>(createEmptyCondition());
-  const [configTab, setConfigTab] = useState<'general' | 'fields' | 'condition'>('general');
+  const [configTab, setConfigTab] = useState<'general' | 'fields' | 'condition' | 'svg'>('general');
+  const [svgTemplates, setSvgTemplates] = useState<{ id: string; name: string }[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+
+  useEffect(() => {
+    svgTemplatesApi.list(1, 100, true).then((res) => {
+      const data = (res as unknown as { data: { templates: { id: string; name: string }[] } }).data;
+      setSvgTemplates(data?.templates ?? []);
+    });
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -88,6 +99,7 @@ export function BuilderPage() {
     setFields((raw?.fields as Field[]) ?? []);
     const cfg = raw?.config as Record<string, unknown>;
     setCondition((cfg?.condition as IConditionGroup) ?? createEmptyCondition());
+    setSelectedTemplateId((cfg?.templateId as string) ?? '');
     setConfigTab('general');
   };
 
@@ -116,6 +128,7 @@ export function BuilderPage() {
       };
       if (selectedNode.data.type === 'FORM') payload.fields = fields;
       if (selectedNode.data.type === 'CONDITION') payload.config = { condition };
+      if (selectedNode.data.type === 'SVG_MODEL') payload.config = { templateId: selectedTemplateId };
       await apiClient.put(`/processes/${id}/steps/${selectedNode.id}`, payload);
       setNodes((nds) =>
         nds.map((n) =>
@@ -201,7 +214,12 @@ export function BuilderPage() {
         <div className="w-72 flex-shrink-0 card space-y-3 overflow-y-auto">
           {/* Tabs */}
           <div className="flex gap-1 border-b border-gray-100 pb-2">
-            {(['general', ...(selectedType === 'FORM' ? ['fields'] : []), ...(selectedType === 'CONDITION' ? ['condition'] : [])] as const).map((tab) => (
+            {([
+              'general',
+              ...(selectedType === 'FORM' ? ['fields'] : []),
+              ...(selectedType === 'CONDITION' ? ['condition'] : []),
+              ...(selectedType === 'SVG_MODEL' ? ['svg'] : []),
+            ] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setConfigTab(tab as typeof configTab)}
@@ -209,7 +227,7 @@ export function BuilderPage() {
                   configTab === tab ? 'bg-primary-600 text-white' : 'text-gray-500 hover:bg-gray-100'
                 }`}
               >
-                {tab === 'general' ? 'כללי' : tab === 'fields' ? 'שדות' : 'תנאי'}
+                {tab === 'general' ? 'כללי' : tab === 'fields' ? 'שדות' : tab === 'condition' ? 'תנאי' : 'SVG'}
               </button>
             ))}
           </div>
@@ -241,6 +259,31 @@ export function BuilderPage() {
                 .flatMap((s) => (s.fields as Field[] ?? []).map((f) => f.name))}
               onChange={setCondition}
             />
+          )}
+
+          {configTab === 'svg' && selectedType === 'SVG_MODEL' && (
+            <div className="space-y-2">
+              <label className="text-xs text-gray-500 block">{t.svgTemplates.selectTemplate}</label>
+              {svgTemplates.length === 0 ? (
+                <p className="text-xs text-gray-400">
+                  אין טמפלטים. <a href="/svg-templates" className="text-primary-600 underline">צור טמפלט</a>
+                </p>
+              ) : (
+                <select
+                  className="input text-sm"
+                  value={selectedTemplateId}
+                  onChange={(e) => setSelectedTemplateId(e.target.value)}
+                >
+                  <option value="">— בחר טמפלט —</option>
+                  {svgTemplates.map((tpl) => (
+                    <option key={tpl.id} value={tpl.id}>{tpl.name}</option>
+                  ))}
+                </select>
+              )}
+              {selectedTemplateId && (
+                <p className="text-xs text-green-600">✓ טמפלט נבחר</p>
+              )}
+            </div>
           )}
 
           <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">

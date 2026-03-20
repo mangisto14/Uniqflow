@@ -8,6 +8,7 @@ const navItems = [
   { to: '/processes', label: t.nav.processes, icon: '⚙️' },
   { to: '/executions', label: t.nav.executions, icon: '▶️' },
   { to: '/team', label: t.nav.team, icon: '👥' },
+  { to: '/svg-templates', label: t.svgTemplates.title, icon: '🗺️' },
 ];
 
 const adminItems = [

@@ -6,3 +6,4 @@ export * from './sharing';
 export * from './conditions';
 export * from './audit';
 export * from './notifications';
+export * from './svg-template';

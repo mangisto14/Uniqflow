@@ -10,6 +10,8 @@ import { ExecutionDetailPage } from './features/execution/ExecutionDetailPage';
 import { TeamDashboardPage } from './features/team-dashboard/TeamDashboardPage';
 import { UsersPage } from './features/admin/UsersPage';
 import { TeamsPage } from './features/admin/TeamsPage';
+import { SvgTemplateGallery } from './features/svg-templates/SvgTemplateGallery';
+import { SvgTemplateEditPage } from './features/svg-templates/SvgTemplateEditPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => !!s.accessToken);
@@ -38,6 +40,8 @@ export function AppRoutes() {
         <Route path="team" element={<TeamDashboardPage />} />
         <Route path="admin/users" element={<UsersPage />} />
         <Route path="admin/teams" element={<TeamsPage />} />
+        <Route path="svg-templates" element={<SvgTemplateGallery />} />
+        <Route path="svg-templates/:id/edit" element={<SvgTemplateEditPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

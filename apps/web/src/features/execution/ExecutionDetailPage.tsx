@@ -4,6 +4,7 @@ import { io } from 'socket.io-client';
 import { executionsApi } from '../../api/executions.api';
 import { useAuthStore } from '../../stores/auth.store';
 import { t } from '../../i18n';
+import { SvgStepInteraction } from '../svg-templates/SvgStepInteraction';
 
 interface StepExecution {
   id: string;
@@ -19,6 +20,7 @@ interface StepExecution {
     name: string;
     type: string;
     order: number;
+    config?: Record<string, unknown>;
     fields?: { id: string; name: string; label: string; fieldType: string; required: boolean }[];
   };
 }
@@ -217,6 +219,16 @@ export function ExecutionDetailPage() {
                   <button onClick={() => handleComplete(se.stepId)} disabled={submitting} className="btn-primary">
                     {submitting ? t.steps.submitting : t.steps.submit}
                   </button>
+                )}
+
+                {se.step.type === 'SVG_MODEL' && typeof se.step.config?.templateId === 'string' && (
+                  <SvgStepInteraction
+                    templateId={se.step.config.templateId}
+                    formData={formData}
+                    onChange={setFormData}
+                    onSubmit={() => handleComplete(se.stepId)}
+                    submitting={submitting}
+                  />
                 )}
               </div>
             )}
