@@ -50,6 +50,7 @@ model User {
   auditLogs         AuditLog[]
   refreshTokens     RefreshToken[]
   notifications     Notification[]
+  svgTemplates      SvgTemplate[]
 
   @@map("users")
 }
@@ -102,6 +103,7 @@ enum StepType {
   NOTIFICATION
   TASK
   REVIEW
+  SVG_MODEL
 }
 
 model ProcessStep {
@@ -286,6 +288,24 @@ model Notification {
   @@index([userId, isRead])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model SvgTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  svgContent  String   @map("svg_content")
+  thumbnail   String?
+  pointsConfig Json    @default("[]") @map("points_config")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdById String   @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([createdById])
+  @@map("svg_templates")
 }
 
 model DispatchRecord {

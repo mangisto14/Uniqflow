@@ -10,6 +10,7 @@ import { UserModule } from './modules/user/user.module';
 import { NotificationModule } from './modules/notifications/notification.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { EngineModule } from './engine/engine.module';
+import { SvgTemplateModule } from './modules/svg-template/svg-template.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { EngineModule } from './engine/engine.module';
     NotificationModule,
     AuditModule,
     EngineModule,
+    SvgTemplateModule,
   ],
 })
 export class AppModule {}
