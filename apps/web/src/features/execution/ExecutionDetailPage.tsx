@@ -99,7 +99,7 @@ export function ExecutionDetailPage() {
         body: { data: Record<string, string>; nextStepId?: string }
       ) => Promise<unknown>)(
         id, stepId,
-        { data: formData, nextStepId: overrideNextStepId ?? nextStepId || undefined },
+        { data: formData, nextStepId: (overrideNextStepId ?? nextStepId) || undefined },
       );
       setFormData({});
       setNextStepId('');
