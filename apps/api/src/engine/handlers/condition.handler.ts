@@ -24,6 +24,6 @@ export class ConditionHandler extends BaseStepHandler {
       ? (config['trueStepId'] as string | undefined)
       : (config['falseStepId'] as string | undefined);
 
-    return this.autoComplete({ result, nextStepId });
+    return { success: true, data: { result }, nextStepId, autoComplete: true };
   }
 }

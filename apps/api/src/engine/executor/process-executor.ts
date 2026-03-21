@@ -64,7 +64,7 @@ export class ProcessExecutor {
         });
 
         if (this.isAutoStep(firstStep.type)) {
-          await this.autoAdvance(tx, execution.id, firstStep, execution.stepExecutions, {});
+          await this.autoAdvance(tx, execution.id, firstStep, process.steps, execution.stepExecutions, {});
         }
       }
 
@@ -231,7 +231,7 @@ export class ProcessExecutor {
     });
 
     if (this.isAutoStep(nextStep.type)) {
-      await this.autoAdvance(tx, executionId, nextStep, stepExecutions, ctx.currentData);
+      await this.autoAdvance(tx, executionId, nextStep, steps, stepExecutions, ctx.currentData);
     }
   }
 
@@ -239,6 +239,7 @@ export class ProcessExecutor {
     tx: Prisma.TransactionClient,
     executionId: string,
     step: ProcessStep,
+    allSteps: ProcessStep[],
     stepExecutions: StepExecution[],
     currentData: Record<string, unknown>,
   ) {
@@ -266,6 +267,17 @@ export class ProcessExecutor {
             completedAt: new Date(),
           },
         });
+
+        const updatedCtx = mergeStepData(ctx, step.id, result.data ?? {});
+        await this.advanceExecution(
+          tx,
+          executionId,
+          allSteps,
+          stepExecutions,
+          step.id,
+          updatedCtx,
+          result.nextStepId,
+        );
       }
     } catch (e) {
       this.logger.error(`Auto-advance failed for step ${step.id}`, e);
