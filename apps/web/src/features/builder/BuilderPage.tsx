@@ -32,13 +32,17 @@ interface Field {
 function stepToNode(step: Record<string, unknown>, index: number): Node {
   const pos = (step.position as { x: number; y: number }) ?? { x: 100 + index * 220, y: 100 };
   const typeInfo = NODE_TYPES_OPTIONS.find((t) => t.type === step.type) ?? NODE_TYPES_OPTIONS[0];
+  const cfg = step.config as Record<string, unknown> | undefined;
+  const isEnd = cfg?.isEndStep === true;
+  const color = isEnd ? '#ef4444' : typeInfo.color;
+  const label = isEnd ? `🏁 ${step.name as string}` : step.name as string;
   return {
     id: step.id as string,
     position: pos,
-    data: { label: step.name as string, type: step.type, color: typeInfo.color, raw: step },
+    data: { label, type: step.type, color, raw: step },
     style: {
-      background: typeInfo.color + '22',
-      border: `2px solid ${typeInfo.color}`,
+      background: color + '22',
+      border: `2px solid ${color}`,
       borderRadius: 8,
       padding: '8px 16px',
       minWidth: 140,
@@ -60,6 +64,7 @@ export function BuilderPage() {
   const [configTab, setConfigTab] = useState<'general' | 'fields' | 'condition' | 'svg'>('general');
   const [svgTemplates, setSvgTemplates] = useState<{ id: string; name: string }[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [isEndStep, setIsEndStep] = useState(false);
 
   useEffect(() => {
     svgTemplatesApi.list(1, 100, true).then((res) => {
@@ -100,6 +105,7 @@ export function BuilderPage() {
     const cfg = raw?.config as Record<string, unknown>;
     setCondition((cfg?.condition as IConditionGroup) ?? createEmptyCondition());
     setSelectedTemplateId((cfg?.templateId as string) ?? '');
+    setIsEndStep((cfg?.isEndStep as boolean) ?? false);
     setConfigTab('general');
   };
 
@@ -127,8 +133,13 @@ export function BuilderPage() {
         position: selectedNode.position,
       };
       if (selectedNode.data.type === 'FORM') payload.fields = fields;
-      if (selectedNode.data.type === 'CONDITION') payload.config = { condition };
-      if (selectedNode.data.type === 'SVG_MODEL') payload.config = { templateId: selectedTemplateId };
+      if (selectedNode.data.type === 'CONDITION') payload.config = { condition, isEndStep };
+      if (selectedNode.data.type === 'SVG_MODEL') payload.config = { templateId: selectedTemplateId, isEndStep };
+      // For all types: persist isEndStep in config (merge with existing config)
+      if (!['CONDITION', 'SVG_MODEL'].includes(selectedNode.data.type)) {
+        const existingCfg = (selectedNode.data.raw as Record<string, unknown>)?.config as Record<string, unknown> ?? {};
+        payload.config = { ...existingCfg, isEndStep };
+      }
       await apiClient.put(`/processes/${id}/steps/${selectedNode.id}`, payload);
       setNodes((nds) =>
         nds.map((n) =>
@@ -235,7 +246,7 @@ export function BuilderPage() {
           {configTab === 'general' && (
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-gray-500 block mb-1">שם השלב</label>
+                <label className="text-xs text-gray-500 block mb-1">שם העמדה</label>
                 <input
                   className="input text-sm"
                   value={stepName}
@@ -243,8 +254,30 @@ export function BuilderPage() {
                 />
               </div>
               <p className="text-xs text-gray-400">
-                {t.builder.stepTypes[selectedType as keyof typeof t.builder.stepTypes] ?? selectedType}
+                סוג: {t.builder.stepTypes[selectedType as keyof typeof t.builder.stepTypes] ?? selectedType}
               </p>
+
+              {/* End station toggle */}
+              <label className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors ${
+                isEndStep
+                  ? 'border-red-400 bg-red-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}>
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-red-500"
+                  checked={isEndStep}
+                  onChange={(e) => setIsEndStep(e.target.checked)}
+                />
+                <div>
+                  <p className={`text-sm font-medium ${isEndStep ? 'text-red-700' : 'text-gray-700'}`}>
+                    🏁 עמדת סיום
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    כשמשלימים עמדה זו — התהליך מסתיים
+                  </p>
+                </div>
+              </label>
             </div>
           )}
 

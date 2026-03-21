@@ -56,7 +56,9 @@ export class ExecutionService {
   }
 
   async completeStep(executionId: string, stepId: string, dto: CompleteStepDto, userId: string) {
-    const result = await this.executor.completeStep(executionId, stepId, userId, dto.data ?? {});
+    const result = await this.executor.completeStep(
+      executionId, stepId, userId, dto.data ?? {}, dto.nextStepId,
+    );
     this.gateway.emitExecutionUpdate(executionId, result);
     return result;
   }

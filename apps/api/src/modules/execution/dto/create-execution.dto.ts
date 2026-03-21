@@ -22,6 +22,11 @@ export class CompleteStepDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({ description: 'Override next step — manual station routing' })
+  @IsOptional()
+  @IsString()
+  nextStepId?: string;
 }
 
 export class RejectStepDto {

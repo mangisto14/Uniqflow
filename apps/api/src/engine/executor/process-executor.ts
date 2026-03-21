@@ -83,6 +83,7 @@ export class ProcessExecutor {
     stepId: string,
     userId: string,
     input: Record<string, unknown>,
+    nextStepId?: string,
   ) {
     const execution = await this.prisma.processExecution.findUniqueOrThrow({
       where: { id: executionId },
@@ -138,6 +139,7 @@ export class ProcessExecutor {
         execution.stepExecutions,
         stepId,
         updatedCtx,
+        nextStepId,
       );
 
       const finalExecution = await tx.processExecution.findUniqueOrThrow({
@@ -183,15 +185,14 @@ export class ProcessExecutor {
     stepExecutions: StepExecution[],
     completedStepId: string,
     ctx: ExecutionContext,
+    nextStepId?: string,
   ) {
-    const completedIdx = steps.findIndex((s) => s.id === completedStepId);
-    const nextStep = steps[completedIdx + 1];
+    // Check if completed step is marked as end station
+    const completedStep = steps.find((s) => s.id === completedStepId);
+    const isEndStep = (completedStep?.config as Record<string, unknown>)?.isEndStep === true;
 
-    if (!nextStep) {
-      const allDone = stepExecutions.every(
-        (se) => se.stepId === completedStepId || se.status === StepExecutionStatus.COMPLETED,
-      );
-      if (allDone && canTransitionProcess(ProcessStatus.ACTIVE, ProcessStatus.COMPLETED)) {
+    if (isEndStep) {
+      if (canTransitionProcess(ProcessStatus.ACTIVE, ProcessStatus.COMPLETED)) {
         await tx.processExecution.update({
           where: { id: executionId },
           data: { status: ProcessStatus.COMPLETED, completedAt: new Date() },
@@ -200,7 +201,28 @@ export class ProcessExecutor {
       return;
     }
 
-    const nextSE = stepExecutions.find((se) => se.stepId === nextStep.id);
+    // Determine next step: manual override > sequential
+    let nextStep: ProcessStep | undefined;
+    if (nextStepId) {
+      nextStep = steps.find((s) => s.id === nextStepId);
+    }
+    if (!nextStep) {
+      const completedIdx = steps.findIndex((s) => s.id === completedStepId);
+      nextStep = steps[completedIdx + 1];
+    }
+
+    if (!nextStep) {
+      if (canTransitionProcess(ProcessStatus.ACTIVE, ProcessStatus.COMPLETED)) {
+        await tx.processExecution.update({
+          where: { id: executionId },
+          data: { status: ProcessStatus.COMPLETED, completedAt: new Date() },
+        });
+      }
+      return;
+    }
+
+    // Activate the next step execution (reset if it was already visited)
+    const nextSE = stepExecutions.find((se) => se.stepId === nextStep!.id);
     if (!nextSE) return;
 
     await tx.stepExecution.update({
