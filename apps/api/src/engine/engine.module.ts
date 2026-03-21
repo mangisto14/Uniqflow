@@ -9,6 +9,7 @@ import { ConditionHandler } from './handlers/condition.handler';
 import { TaskHandler } from './handlers/task.handler';
 import { NotificationHandler } from './handlers/notification.handler';
 import { ReviewHandler } from './handlers/review.handler';
+import { SvgModelHandler } from './handlers/svg-model.handler';
 
 @Module({
   imports: [PrismaModule],
@@ -22,6 +23,7 @@ import { ReviewHandler } from './handlers/review.handler';
     TaskHandler,
     NotificationHandler,
     ReviewHandler,
+    SvgModelHandler,
   ],
   exports: [ProcessExecutor, DependencyResolver],
 })

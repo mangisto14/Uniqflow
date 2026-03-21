@@ -7,6 +7,7 @@ import { ConditionHandler } from './condition.handler';
 import { TaskHandler } from './task.handler';
 import { NotificationHandler } from './notification.handler';
 import { ReviewHandler } from './review.handler';
+import { SvgModelHandler } from './svg-model.handler';
 
 @Injectable()
 export class HandlerRegistry {
@@ -19,6 +20,7 @@ export class HandlerRegistry {
     private readonly taskHandler: TaskHandler,
     private readonly notificationHandler: NotificationHandler,
     private readonly reviewHandler: ReviewHandler,
+    private readonly svgModelHandler: SvgModelHandler,
   ) {
     this.handlers = new Map([
       [StepType.FORM, this.formHandler],
@@ -27,6 +29,7 @@ export class HandlerRegistry {
       [StepType.TASK, this.taskHandler],
       [StepType.NOTIFICATION, this.notificationHandler],
       [StepType.REVIEW, this.reviewHandler],
+      [StepType.SVG_MODEL, this.svgModelHandler],
     ]);
   }
 

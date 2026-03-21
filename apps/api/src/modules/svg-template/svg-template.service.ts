@@ -57,12 +57,29 @@ const BUILT_IN_TEMPLATES = [
     name: 'רכב טנדר',
     description: 'תבנית SVG של רכב טנדר לסימון נזקים, ציוד ומיקומים',
     svgContent: TRUCK_SVG,
+    pointsConfig: [
+      { id: 'pt-truck-front',   label: 'חזית הרכב',  x: 88, y: 55, fieldType: 'text' },
+      { id: 'pt-truck-hood',    label: 'מכסה מנוע',  x: 73, y: 42, fieldType: 'text' },
+      { id: 'pt-truck-cabin',   label: 'תא נהג',     x: 52, y: 48, fieldType: 'text' },
+      { id: 'pt-truck-cargo',   label: 'ארגז משא',   x: 30, y: 48, fieldType: 'text' },
+      { id: 'pt-truck-rear',    label: 'גב הרכב',    x: 10, y: 55, fieldType: 'text' },
+      { id: 'pt-truck-wheel-f', label: 'גלגל קדמי',  x: 76, y: 82, fieldType: 'text' },
+      { id: 'pt-truck-wheel-r', label: 'גלגל אחורי', x: 30, y: 82, fieldType: 'text' },
+    ],
   },
   {
     id: 'tpl-person-employee',
     name: 'דמות עובד',
     description: 'תבנית SVG של דמות אדם לסימון פציעות, ציוד מגן וממצאים',
     svgContent: PERSON_SVG,
+    pointsConfig: [
+      { id: 'pt-person-head',         label: 'ראש',          x: 50, y: 15, fieldType: 'text' },
+      { id: 'pt-person-right-arm',    label: 'יד ימין',      x: 8,  y: 42, fieldType: 'text' },
+      { id: 'pt-person-left-arm',     label: 'יד שמאל',      x: 92, y: 42, fieldType: 'text' },
+      { id: 'pt-person-chest',        label: 'חזה / גוף',    x: 50, y: 42, fieldType: 'text' },
+      { id: 'pt-person-right-leg',    label: 'רגל ימין',     x: 35, y: 80, fieldType: 'text' },
+      { id: 'pt-person-left-leg',     label: 'רגל שמאל',     x: 65, y: 80, fieldType: 'text' },
+    ],
   },
 ];
 
@@ -88,13 +105,16 @@ export class SvgTemplateService implements OnModuleInit {
       for (const tpl of BUILT_IN_TEMPLATES) {
         await this.prisma.svgTemplate.upsert({
           where: { id: tpl.id },
-          update: {},
+          update: {
+            svgContent: tpl.svgContent,
+            pointsConfig: tpl.pointsConfig as object[],
+          },
           create: {
             id: tpl.id,
             name: tpl.name,
             description: tpl.description,
             svgContent: tpl.svgContent,
-            pointsConfig: [],
+            pointsConfig: tpl.pointsConfig as object[],
             isActive: true,
             isBuiltIn: true,
             createdById: adminUser.id,
