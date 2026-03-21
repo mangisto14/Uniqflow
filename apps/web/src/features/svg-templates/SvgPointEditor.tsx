@@ -1,5 +1,4 @@
-import { useRef, useState } from 'react';
-import { t } from '../../i18n';
+import { useRef, useState, useCallback } from 'react';
 
 export interface SvgPoint {
   id: string;
@@ -7,162 +6,245 @@ export interface SvgPoint {
   x: number;
   y: number;
   fieldType: string;
+  description?: string;
 }
 
-const FIELD_TYPES = ['text', 'number', 'email', 'date', 'select', 'textarea', 'checkbox'];
+const FIELD_TYPES: { value: string; label: string }[] = [
+  { value: 'text',     label: 'טקסט' },
+  { value: 'number',   label: 'מספר' },
+  { value: 'textarea', label: 'טקסט חופשי' },
+  { value: 'date',     label: 'תאריך' },
+  { value: 'select',   label: 'בחירה מרשימה' },
+  { value: 'checkbox', label: 'כן / לא' },
+  { value: 'email',    label: 'אימייל' },
+];
 
 interface Props {
   svgContent: string;
   points: SvgPoint[];
   onChange: (points: SvgPoint[]) => void;
+  readOnly?: boolean;
 }
 
-export function SvgPointEditor({ svgContent, points, onChange }: Props) {
+export function SvgPointEditor({ svgContent, points, onChange, readOnly = false }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [editingPoint, setEditingPoint] = useState<SvgPoint | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
 
-  const handleSvgClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const selectedPoint = points.find((p) => p.id === selectedId) ?? null;
+
+  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (readOnly) return;
+    if ((e.target as HTMLElement).closest('[data-pin]')) return;
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    // Only add if clicking directly on SVG (not on a pin)
-    if ((e.target as HTMLElement).closest('.svg-pin')) return;
-
     const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
     const y = Math.round(((e.clientY - rect.top) / rect.height) * 100);
-
     const newPoint: SvgPoint = {
       id: `pt-${Date.now()}`,
       label: `נקודה ${points.length + 1}`,
-      x,
-      y,
+      x, y,
       fieldType: 'text',
     };
-    const updated = [...points, newPoint];
-    onChange(updated);
-    setEditingPoint(newPoint);
+    onChange([...points, newPoint]);
     setSelectedId(newPoint.id);
-  };
+  }, [readOnly, points, onChange]);
 
-  const updatePoint = (id: string, patch: Partial<SvgPoint>) => {
-    const updated = points.map((p) => (p.id === id ? { ...p, ...patch } : p));
-    onChange(updated);
-    if (editingPoint?.id === id) setEditingPoint((prev) => prev ? { ...prev, ...patch } : prev);
-  };
+  const handlePinMouseDown = useCallback((e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (readOnly) return;
+    setDraggingId(id);
+    setSelectedId(id);
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const onMouseMove = (ev: MouseEvent) => {
+      const x = Math.max(0, Math.min(100, Math.round(((ev.clientX - rect.left) / rect.width) * 100)));
+      const y = Math.max(0, Math.min(100, Math.round(((ev.clientY - rect.top) / rect.height) * 100)));
+      onChange(points.map((p) => p.id === id ? { ...p, x, y } : p));
+    };
+    const onMouseUp = () => {
+      setDraggingId(null);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, [readOnly, points, onChange]);
+
+  const updatePoint = (id: string, patch: Partial<SvgPoint>) =>
+    onChange(points.map((p) => (p.id === id ? { ...p, ...patch } : p)));
 
   const removePoint = (id: string) => {
     onChange(points.filter((p) => p.id !== id));
-    if (selectedId === id) { setSelectedId(null); setEditingPoint(null); }
+    if (selectedId === id) setSelectedId(null);
   };
 
-  const selectedPoint = points.find((p) => p.id === selectedId);
-
   return (
-    <div className="flex gap-4 h-full" dir="rtl">
-      {/* SVG canvas */}
-      <div className="flex-1 flex flex-col gap-2">
-        <p className="text-xs text-gray-500">{t.svgTemplates.clickToPlace}</p>
+    <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0" dir="rtl">
+
+      {/* ── SVG Canvas ── */}
+      <div className="flex-1 flex flex-col min-h-0 gap-2">
+        {!readOnly && (
+          <p className="text-xs text-gray-500 flex-shrink-0">
+            💡 לחץ על המודל להוספת נקודה · גרור נקודה קיימת לשינוי מיקום
+          </p>
+        )}
         <div
           ref={containerRef}
-          className="relative border-2 border-dashed border-gray-200 rounded-xl overflow-hidden bg-gray-50 cursor-crosshair select-none"
-          style={{ minHeight: 360 }}
-          onClick={handleSvgClick}
+          onClick={handleCanvasClick}
+          className={[
+            'relative flex-1 rounded-xl overflow-hidden bg-gray-50 select-none',
+            readOnly
+              ? 'border border-gray-200 cursor-default'
+              : 'border-2 border-dashed border-primary-300 hover:border-primary-400 transition-colors',
+            draggingId ? 'cursor-grabbing' : readOnly ? '' : 'cursor-crosshair',
+          ].join(' ')}
+          style={{ minHeight: 300 }}
         >
-          {/* SVG content */}
+          {/* SVG */}
           <div
-            className="w-full h-full"
+            className="absolute inset-0 w-full h-full flex items-center justify-center p-3"
             style={{ pointerEvents: 'none' }}
-            dangerouslySetInnerHTML={{ __html: svgContent }}
+            dangerouslySetInnerHTML={{ __html: svgContent || '' }}
           />
 
-          {/* Point pins */}
-          {points.map((pt) => (
-            <div
-              key={pt.id}
-              className={`svg-pin absolute z-10 -translate-x-1/2 -translate-y-1/2 cursor-pointer`}
-              style={{ left: `${pt.x}%`, top: `${pt.y}%` }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedId(pt.id);
-                setEditingPoint(pt);
-              }}
-            >
+          {/* Pins */}
+          {points.map((pt, i) => {
+            const sel = selectedId === pt.id;
+            return (
               <div
-                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-white text-xs font-bold shadow-lg transition-transform ${
-                  selectedId === pt.id
-                    ? 'bg-primary-600 border-primary-800 scale-125'
-                    : 'bg-red-500 border-red-700 hover:scale-110'
-                }`}
+                key={pt.id}
+                data-pin="true"
+                className="absolute z-10"
+                style={{
+                  left: `${pt.x}%`,
+                  top: `${pt.y}%`,
+                  transform: 'translate(-50%, -50%)',
+                  cursor: readOnly ? 'default' : draggingId === pt.id ? 'grabbing' : 'grab',
+                }}
+                onMouseDown={(e) => handlePinMouseDown(e, pt.id)}
+                onClick={(e) => { e.stopPropagation(); setSelectedId(pt.id); }}
               >
-                {points.indexOf(pt) + 1}
+                <div className={[
+                  'w-7 h-7 rounded-full border-2 flex items-center justify-center',
+                  'text-white text-xs font-bold shadow-lg transition-all duration-100',
+                  sel
+                    ? 'bg-primary-600 border-primary-800 scale-125 ring-2 ring-primary-300 ring-offset-1'
+                    : 'bg-red-500 border-red-700 hover:scale-110',
+                ].join(' ')}>
+                  {i + 1}
+                </div>
+                <div className="absolute top-full mt-1 right-1/2 translate-x-1/2 whitespace-nowrap bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded pointer-events-none">
+                  {pt.label}
+                </div>
               </div>
-              <div className="absolute top-full mt-0.5 right-1/2 translate-x-1/2 whitespace-nowrap bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded pointer-events-none">
-                {pt.label}
+            );
+          })}
+
+          {points.length === 0 && !readOnly && (
+            <div className="absolute inset-0 flex items-end justify-center pb-6 pointer-events-none">
+              <div className="bg-white/90 rounded-xl px-4 py-2 text-sm text-gray-400 shadow border border-gray-100">
+                לחץ על המודל להוספת נקודה ראשונה
               </div>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
-      {/* Points list + editor */}
-      <div className="w-60 flex flex-col gap-3">
-        <h3 className="font-semibold text-sm text-gray-700">{t.svgTemplates.pointsConfig}</h3>
+      {/* ── Panel: list + editor ── */}
+      <div className="lg:w-64 flex flex-col gap-3 flex-shrink-0 min-h-0">
+        <h3 className="font-semibold text-sm text-gray-700 flex-shrink-0">
+          נקודות{' '}
+          <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs font-normal">
+            {points.length}
+          </span>
+        </h3>
 
-        {points.length === 0 ? (
-          <p className="text-xs text-gray-400">{t.svgTemplates.noPoints}</p>
-        ) : (
-          <div className="space-y-1 overflow-y-auto flex-1">
-            {points.map((pt, i) => (
-              <div
-                key={pt.id}
-                className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-colors ${
-                  selectedId === pt.id ? 'bg-primary-50 border border-primary-200' : 'hover:bg-gray-50'
-                }`}
-                onClick={() => { setSelectedId(pt.id); setEditingPoint(pt); }}
-              >
-                <span className="w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center flex-shrink-0">
-                  {i + 1}
-                </span>
-                <span className="flex-1 truncate text-gray-800">{pt.label}</span>
+        {/* List */}
+        <div className="overflow-y-auto flex-1 space-y-1 min-h-0" style={{ maxHeight: 200 }}>
+          {points.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-4">
+              {readOnly ? 'אין נקודות' : 'לחץ על המודל להוספה'}
+            </p>
+          ) : points.map((pt, i) => (
+            <div
+              key={pt.id}
+              onClick={() => setSelectedId(pt.id === selectedId ? null : pt.id)}
+              className={[
+                'flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer text-sm transition-all',
+                selectedId === pt.id
+                  ? 'bg-primary-50 border border-primary-200 shadow-sm'
+                  : 'hover:bg-gray-50 border border-transparent',
+              ].join(' ')}
+            >
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 ${selectedId === pt.id ? 'bg-primary-600' : 'bg-red-500'}`}>
+                {i + 1}
+              </span>
+              <span className="flex-1 truncate text-gray-800">{pt.label}</span>
+              <span className="text-[10px] text-gray-400">{FIELD_TYPES.find(f => f.value === pt.fieldType)?.label ?? pt.fieldType}</span>
+              {!readOnly && (
                 <button
                   className="text-gray-300 hover:text-red-500 transition-colors"
                   onClick={(e) => { e.stopPropagation(); removePoint(pt.id); }}
-                  title={t.svgTemplates.deletePoint}
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+                >✕</button>
+              )}
+            </div>
+          ))}
+        </div>
 
-        {/* Inline editor for selected point */}
-        {selectedPoint && (
-          <div className="border-t border-gray-100 pt-3 space-y-2">
-            <p className="text-xs font-medium text-gray-600">עריכת נקודה {points.indexOf(selectedPoint) + 1}</p>
+        {/* Edit panel */}
+        {selectedPoint && !readOnly && (
+          <div className="border-t border-gray-100 pt-3 space-y-3 flex-shrink-0">
+            <p className="text-xs font-semibold text-primary-700">
+              עריכת נקודה {points.indexOf(selectedPoint) + 1}
+            </p>
+
             <div>
-              <label className="text-xs text-gray-500 block mb-0.5">{t.svgTemplates.pointLabel}</label>
+              <label className="text-xs text-gray-500 block mb-1">שם / תווית *</label>
               <input
                 className="input text-sm"
                 value={selectedPoint.label}
                 onChange={(e) => updatePoint(selectedPoint.id, { label: e.target.value })}
+                autoFocus
               />
             </div>
+
             <div>
-              <label className="text-xs text-gray-500 block mb-0.5">{t.svgTemplates.pointFieldType}</label>
+              <label className="text-xs text-gray-500 block mb-1">סוג שדה</label>
               <select
                 className="input text-sm"
                 value={selectedPoint.fieldType}
                 onChange={(e) => updatePoint(selectedPoint.id, { fieldType: e.target.value })}
               >
                 {FIELD_TYPES.map((ft) => (
-                  <option key={ft} value={ft}>{ft}</option>
+                  <option key={ft.value} value={ft.value}>{ft.label}</option>
                 ))}
               </select>
             </div>
-            <p className="text-xs text-gray-400">
-              מיקום: {selectedPoint.x}%, {selectedPoint.y}%
-            </p>
+
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">הוראות (אופציונלי)</label>
+              <textarea
+                className="input text-sm resize-none"
+                rows={2}
+                value={selectedPoint.description ?? ''}
+                onChange={(e) => updatePoint(selectedPoint.id, { description: e.target.value })}
+                placeholder="מה למלא בנקודה זו..."
+              />
+            </div>
+
+            <div className="text-xs text-gray-400 bg-gray-50 rounded-lg px-2 py-1.5 flex justify-between">
+              <span>מיקום: {selectedPoint.x}%, {selectedPoint.y}%</span>
+              <span>גרור לשינוי</span>
+            </div>
+
+            <button
+              onClick={() => removePoint(selectedPoint.id)}
+              className="w-full text-xs text-red-500 hover:bg-red-50 rounded-lg py-1.5 transition-colors border border-red-100"
+            >
+              מחק נקודה זו
+            </button>
           </div>
         )}
       </div>
