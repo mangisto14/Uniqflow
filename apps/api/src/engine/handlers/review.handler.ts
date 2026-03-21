@@ -11,11 +11,13 @@ export class ReviewHandler extends BaseStepHandler {
     _ctx: ExecutionContext,
     input?: Record<string, unknown>,
   ): Promise<StepHandlerResult> {
+    // Any explicit completeStep call (including approve path from UI) marks the review as done
     if (!input) return { success: false, error: 'Awaiting review' };
-    const reviewed = input['reviewed'];
-    if (reviewed === true) {
-      return this.ok({ reviewed: true, reviewedBy: input['userId'], feedback: input['feedback'] });
+    const raw = input['reviewed'] ?? input['approved'];
+    const isRejected = raw === false || raw === 'false';
+    if (isRejected) {
+      return this.fail('Review rejected: ' + (input['reason'] ?? 'No reason given'));
     }
-    return { success: false, error: 'Awaiting review' };
+    return this.ok({ reviewed: true, feedback: input['feedback'] ?? input['notes'] });
   }
 }

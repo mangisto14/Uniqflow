@@ -11,8 +11,9 @@ export class TaskHandler extends BaseStepHandler {
     _ctx: ExecutionContext,
     input?: Record<string, unknown>,
   ): Promise<StepHandlerResult> {
-    if (input && input['completed'] === true) {
-      return this.ok({ completed: true, completedBy: input['userId'], notes: input['notes'] });
+    // Any explicit completeStep call marks the task as done
+    if (input !== undefined) {
+      return this.ok({ completed: true, notes: input['notes'] });
     }
     return { success: false, error: 'Awaiting task completion' };
   }
